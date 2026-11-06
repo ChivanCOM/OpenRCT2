@@ -203,6 +203,8 @@ struct PaintNodeStorage
 struct PaintSession : public PaintSessionCore
 {
     OpenRCT2::Drawing::RenderTarget rt;
+    // Viewport columns: the number of 32-pixel (world) strips the column spans, from rt.cullingX
+    uint8_t ColumnStrips;
     PaintNodeStorage paintEntries;
 
     PaintStruct* AllocateNormalPaintEntry() noexcept

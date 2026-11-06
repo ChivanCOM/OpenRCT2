@@ -184,6 +184,7 @@ PaintSession* Painter::CreateSession(RenderTarget& rt, ViewportFlags viewFlags, 
     }
 
     session->rt = rt;
+    session->ColumnStrips = 1;
     session->ViewFlags = viewFlags;
     session->QuadrantBackIndex = std::numeric_limits<uint32_t>::max();
     session->QuadrantFrontIndex = 0;

@@ -271,10 +271,10 @@ static PaintStruct* CreateNormalPaintStructHeight(
 }
 
 template<uint8_t direction>
-void PaintSessionGenerateRotate(PaintSession& session)
+static CoordsXY PaintSessionFirstTile(int32_t worldX, int32_t worldY)
 {
     // Optimised modified version of ViewportPosToMapPos
-    ScreenCoordsXY screenCoord = { floor2(session.rt.WorldX(), 32), floor2((session.rt.WorldY() - 16), 32) };
+    ScreenCoordsXY screenCoord = { floor2(worldX, 32), floor2((worldY - 16), 32) };
     CoordsXY mapTile = { screenCoord.y - screenCoord.x / 2, screenCoord.y + screenCoord.x / 2 };
     mapTile = mapTile.rotate(direction);
 
@@ -282,7 +282,16 @@ void PaintSessionGenerateRotate(PaintSession& session)
     {
         mapTile.y -= 16;
     }
-    mapTile = mapTile.toTileStart();
+    return mapTile.toTileStart();
+}
+
+template<uint8_t direction>
+static void PaintSessionGenerateStrips(PaintSession& session, uint16_t numVerticalTiles);
+
+template<uint8_t direction>
+void PaintSessionGenerateRotate(PaintSession& session)
+{
+    CoordsXY mapTile = PaintSessionFirstTile<direction>(session.rt.WorldX(), session.rt.WorldY());
 
     // Tile rows below the view are visited because tall elements standing there can reach into
     // it. The original margin of 2128 is the highest possible point (255 height units of 8) plus
@@ -298,6 +307,12 @@ void PaintSessionGenerateRotate(PaintSession& session)
         CoordsXY{ 32, 0 }.rotate(direction),
     };
     constexpr CoordsXY nextVerticalTile = CoordsXY{ 32, 32 }.rotate(direction);
+
+    if (session.ColumnStrips > 1)
+    {
+        PaintSessionGenerateStrips<direction>(session, numVerticalTiles);
+        return;
+    }
 
     for (; numVerticalTiles > 0; --numVerticalTiles)
     {
@@ -315,6 +330,90 @@ void PaintSessionGenerateRotate(PaintSession& session)
         EntityPaintSetup(session, loc3);
 
         mapTile += nextVerticalTile;
+    }
+}
+
+/**
+ * A column several 32-pixel strips wide. Walking each strip as above would set up the tiles and
+ * entities where neighbouring strips overlap twice: walk every line of tiles (a screen x
+ * position) once instead, over the rows any strip needs, in the order of the walk above.
+ */
+template<uint8_t direction>
+static void PaintSessionGenerateStrips(PaintSession& session, uint16_t numVerticalTiles)
+{
+    constexpr CoordsXY nextVerticalTile = CoordsXY{ 32, 32 }.rotate(direction);
+    constexpr int32_t kMaxLines = 4 * 4;
+    struct Line
+    {
+        CoordsXY base; // the line's tile at row 0
+        int32_t parity;
+        int32_t first, last; // half rows
+        bool tiles, entities;
+    };
+    Line lines[kMaxLines];
+    int32_t numLines = 0;
+
+    // A tile's half row: one step down the line is two half rows, the line one strip to the right
+    // starts half a row lower.
+    const auto halfRow = [&](const CoordsXY& pos) {
+        return (pos.x * nextVerticalTile.x + pos.y * nextVerticalTile.y) / 1024;
+    };
+    const auto addLine = [&](const CoordsXY& start, bool tiles, bool entities) {
+        const int32_t h = halfRow(start);
+        const CoordsXY base = start - nextVerticalTile * (h >> 1);
+        const int32_t last = h + 2 * (numVerticalTiles - 1);
+        for (int32_t i = 0; i < numLines; i++)
+        {
+            Line& line = lines[i];
+            if (line.base == base && line.parity == (h & 1))
+            {
+                line.first = std::min(line.first, h);
+                line.last = std::max(line.last, last);
+                line.tiles |= tiles;
+                line.entities |= entities;
+                return;
+            }
+        }
+        if (numLines < kMaxLines)
+            lines[numLines++] = { base, h & 1, h, last, tiles, entities };
+    };
+
+    constexpr CoordsXY adjacentTiles[] = {
+        CoordsXY{ -32, 32 }.rotate(direction),
+        CoordsXY{ 0, 32 }.rotate(direction),
+        CoordsXY{ 32, 0 }.rotate(direction),
+    };
+    const auto& rt = session.rt;
+    const int32_t left = rt.zoom_level.ApplyTo(rt.cullingX);
+    const int32_t strips = std::min<int32_t>(session.ColumnStrips, kMaxLines / 4);
+    for (int32_t strip = 0; strip < strips; strip++)
+    {
+        const CoordsXY mapTile = PaintSessionFirstTile<direction>(left + strip * 32, rt.WorldY());
+        addLine(mapTile, true, true);
+        addLine(mapTile + adjacentTiles[0], false, true);
+        addLine(mapTile + adjacentTiles[1], true, true);
+        addLine(mapTile + adjacentTiles[2], false, true);
+    }
+
+    int32_t first = lines[0].first, last = lines[0].last;
+    for (int32_t i = 1; i < numLines; i++)
+    {
+        first = std::min(first, lines[i].first);
+        last = std::max(last, lines[i].last);
+    }
+    for (int32_t h = first; h <= last; h++)
+    {
+        for (int32_t i = 0; i < numLines; i++)
+        {
+            const Line& line = lines[i];
+            if (line.parity != (h & 1) || h < line.first || h > line.last)
+                continue;
+            const CoordsXY pos = line.base + nextVerticalTile * (h >> 1);
+            if (line.tiles)
+                TileElementPaintSetup(session, pos);
+            if (line.entities)
+                EntityPaintSetup(session, pos);
+        }
     }
 }
 

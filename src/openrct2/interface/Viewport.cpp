@@ -923,7 +923,14 @@ namespace OpenRCT2
             useParallelDrawing = true;
         }
 
-        const int32_t columnWidth = worldRT.zoom_level.ApplyInversedTo(kCoordsXYStep);
+        // Columns of several 32-pixel strips set up the tiles where the strips overlap once
+        // instead of in each strip (PaintSessionGenerateStrips). $G3_PAINT_STRIPS: 1, 2 or 4.
+        static const int32_t columnStrips = [] {
+            const char* v = std::getenv("G3_PAINT_STRIPS");
+            const int32_t n = v != nullptr ? std::atoi(v) : 1;
+            return n == 2 || n == 4 ? n : 1;
+        }();
+        const int32_t columnWidth = worldRT.zoom_level.ApplyInversedTo(kCoordsXYStep * columnStrips);
         const int32_t rightBorder = worldRT.x + worldRT.width;
         const int32_t alignedX = floor2(worldRT.x, columnWidth);
 
@@ -931,6 +938,7 @@ namespace OpenRCT2
         for (int32_t x = alignedX; x < rightBorder; x += columnWidth)
         {
             PaintSession* session = PaintSessionAlloc(worldRT, viewport->flags, viewport->rotation);
+            session->ColumnStrips = columnStrips;
             _paintColumns.push_back(session);
 
             RenderTarget& columnRT = session->rt;
@@ -967,7 +975,13 @@ namespace OpenRCT2
             }
             else
             {
+                // Single-threaded: paint and release the column right away, so the next column
+                // reuses the same session (the free list hands back the last one released) while
+                // its paint structs are still in the CPU cache.
                 ViewportFillColumn(*session);
+                ViewportPaintColumn(*session);
+                PaintSessionFree(session);
+                _paintColumns.pop_back();
             }
         }
 
