@@ -134,9 +134,10 @@ namespace OpenRCT2
         MapUpdateHighestZ();
     }
 
-    // Element heights only rise through MapRaiseHighestElementZ between full scans (game actions
-    // use setClearanceZ); the scan also catches direct writes and lets the value fall again.
-    // Entities count over the last two scan periods, so a balloon that just vanished still does.
+    // Element heights only rise through MapRaiseHighestElementZ between full scans (setClearanceZ,
+    // the tile inspector's direct writes; the map generator rescans); the occasional scan lets the
+    // value fall again. Entities count over the last two scan periods, so a balloon that just
+    // vanished still does.
     static int32_t _highestElementZ = kMaximumLandHeight * kCoordsZStep;
     static int32_t _highestEntityZ = 0;
     static int32_t _highestEntityZPrevious = 0;

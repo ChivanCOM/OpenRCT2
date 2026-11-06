@@ -54,6 +54,9 @@ namespace OpenRCT2::World::MapGenerator
         // Place trees?
         if (settings->trees)
             placeTrees(settings);
+
+        // Heights were written directly
+        MapUpdateHighestZ();
     }
 
     void resetSurfaces(Settings* settings)

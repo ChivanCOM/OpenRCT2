@@ -484,6 +484,7 @@ namespace OpenRCT2::TileInspector
 
             tileElement->baseHeight += heightOffset;
             tileElement->clearanceHeight += heightOffset;
+            MapRaiseHighestElementZ(tileElement->getClearanceZ());
         }
 
         return GameActions::Result();
@@ -768,6 +769,7 @@ namespace OpenRCT2::TileInspector
 
                 nextTrackElement->baseHeight += offset;
                 nextTrackElement->clearanceHeight += offset;
+                MapRaiseHighestElementZ(nextTrackElement->getClearanceZ());
 
                 MapInvalidateTileFull(elem);
             }

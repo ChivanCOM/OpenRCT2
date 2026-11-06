@@ -254,9 +254,11 @@ namespace OpenRCT2
 
         gInUpdateCode = true;
 
-        // Once a second: rescan the highest drawn point (see MapGetHighestDrawnZ)
+        // About once a minute: rescan the highest drawn point, so it can come down again (rises are
+        // tracked as they happen, see MapGetHighestDrawnZ). A scan reads every tile element: on a
+        // large park that is megabytes, too slow for a slow machine to do often.
         static uint32_t highestZTicks = 0;
-        if (++highestZTicks >= 40)
+        if (++highestZTicks >= 2048)
         {
             highestZTicks = 0;
             MapUpdateHighestZ();
