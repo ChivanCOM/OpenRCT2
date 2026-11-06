@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <bit>
 #include <cstdint>
 #include <cstring>
 #include <type_traits>
@@ -78,10 +79,106 @@ static T ByteSwapBE(const T& value)
         // Complex type, reinterpret_cast is not safe for this case.
         // Create a temporary of size(T) as unsigned type via copy instead.
         UIntType temp;
-        std::memcpy(&temp, &value, sizeof(T));
+        std::memcpy(&temp, static_cast<const void*>(&value), sizeof(T));
         auto result = ByteSwap::SwapBE(temp);
         T res;
-        std::memcpy(&res, &result, sizeof(T));
+        std::memcpy(static_cast<void*>(&res), &result, sizeof(T));
         return res;
     }
 }
+
+// Swap between native and little-endian order (a no-op on little-endian hosts). RCT2 and
+// OpenRCT2 files are little-endian.
+template<typename T>
+static T ByteSwapLE(const T& value)
+{
+    if constexpr (std::endian::native == std::endian::little || sizeof(T) == 1)
+        return value;
+    else
+        return ByteSwapBE(value);
+}
+
+// Types IStream::ReadValue/WriteValue convert as one little-endian number: integers, enums
+// and FlagHolder.
+template<typename T>
+constexpr bool kIsLEScalar = std::is_integral_v<T> || std::is_enum_v<T>
+    || (sizeof(T) <= 8 && requires(const T& t) { t.holder; });
+
+// A value stored in little-endian byte order, for structs that are read from or written to
+// files as raw memory. Same size and alignment as T.
+// No constructors, so it can live in anonymous unions; initialise with {} or assignment.
+template<typename T>
+class LE
+{
+    T raw;
+
+public:
+    operator T() const
+    {
+        return ByteSwapLE(raw);
+    }
+    T get() const
+    {
+        return ByteSwapLE(raw);
+    }
+    LE& operator=(const T& value)
+    {
+        raw = ByteSwapLE(value);
+        return *this;
+    }
+    template<typename U>
+    LE& operator+=(const U& v)
+    {
+        return *this = static_cast<T>(get() + v);
+    }
+    template<typename U>
+    LE& operator-=(const U& v)
+    {
+        return *this = static_cast<T>(get() - v);
+    }
+    template<typename U>
+    LE& operator|=(const U& v)
+    {
+        return *this = static_cast<T>(get() | v);
+    }
+    template<typename U>
+    LE& operator&=(const U& v)
+    {
+        return *this = static_cast<T>(get() & v);
+    }
+    template<typename U>
+    LE& operator^=(const U& v)
+    {
+        return *this = static_cast<T>(get() ^ v);
+    }
+    template<typename U>
+    LE& operator<<=(const U& v)
+    {
+        return *this = static_cast<T>(get() << v);
+    }
+    template<typename U>
+    LE& operator>>=(const U& v)
+    {
+        return *this = static_cast<T>(get() >> v);
+    }
+    LE& operator++()
+    {
+        return *this = static_cast<T>(get() + 1);
+    }
+    LE& operator--()
+    {
+        return *this = static_cast<T>(get() - 1);
+    }
+    T operator++(int)
+    {
+        T old = get();
+        *this = static_cast<T>(old + 1);
+        return old;
+    }
+    T operator--(int)
+    {
+        T old = get();
+        *this = static_cast<T>(old - 1);
+        return old;
+    }
+};

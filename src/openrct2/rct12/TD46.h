@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "../core/Endianness.h"
 #include "../core/EnumUtils.hpp"
 
 #include <cstdint>
@@ -23,7 +24,7 @@ namespace OpenRCT2
 #pragma pack(push, 1)
     struct TD7TrackElement
     {
-        TrackElemType type; // 0x00
+        LE<TrackElemType> type; // 0x00
         uint8_t flags;      // 0x02
     };
 #pragma pack(pop)
@@ -55,14 +56,14 @@ namespace OpenRCT2::RCT12
     {
         union
         {
-            uint32_t all;
+            LE<uint32_t> all;
             struct
             {
                 int8_t x;
                 int8_t y;
                 union
                 {
-                    uint16_t mazeEntry;
+                    LE<uint16_t> mazeEntry;
                     struct
                     {
                         uint8_t direction;

@@ -87,11 +87,11 @@ namespace OpenRCT2
         if (Generation == ObjectGeneration::dat)
         {
             char buffer[32];
-            std::snprintf(&buffer[0], 9, "%08X", Entry.flags);
+            std::snprintf(&buffer[0], 9, "%08X", Entry.flags.get());
             buffer[8] = '|';
             std::memcpy(&buffer[9], Entry.name, 8);
             buffer[17] = '|';
-            std::snprintf(&buffer[18], 9, "%8X", Entry.checksum);
+            std::snprintf(&buffer[18], 9, "%8X", Entry.checksum.get());
             return std::string(buffer);
         }
         else

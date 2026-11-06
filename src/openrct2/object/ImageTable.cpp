@@ -461,7 +461,7 @@ namespace OpenRCT2
                 g1Element.height = stream->ReadValue<int16_t>();
                 g1Element.xOffset = stream->ReadValue<int16_t>();
                 g1Element.yOffset = stream->ReadValue<int16_t>();
-                g1Element.flags = stream->ReadValue<G1Flags>();
+                g1Element.flags = G1Flags(stream->ReadValue<uint16_t>());
                 g1Element.zoomedOffset = stream->ReadValue<uint16_t>();
 
                 newEntries.push_back(std::move(g1Element));

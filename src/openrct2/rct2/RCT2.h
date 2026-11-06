@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "../core/Endianness.h"
 #include "../core/FileSystem.hpp"
 #include "../core/FixedPoint.hpp"
 #include "../object/Object.h"
@@ -109,21 +110,21 @@ namespace OpenRCT2::RCT2
         // pointer to static info. for example, wild mouse type is 0x36, subtype is
         // 0x4c.
         RCT12ObjectEntryIndex subtype;                                 // 0x001
-        uint16_t pad002;                                               // 0x002
+        LE<uint16_t> pad002;                                               // 0x002
         uint8_t mode;                                                  // 0x004
         VehicleColourSettings vehicleColourSettings;                   // 0x005
         RCT12VehicleColour vehicleColours[Limits::kMaxVehicleColours]; // 0x006
         uint8_t pad046[0x03]; // 0x046, Used to be track colours in RCT1 without expansions
         // 0 = closed, 1 = open, 2 = test
         uint8_t status; // 0x049
-        StringId name;  // 0x04A
+        LE<StringId> name;  // 0x04A
         union
         {
-            uint32_t nameArguments; // 0x04C
+            LE<uint32_t> nameArguments; // 0x04C
             struct
             {
-                StringId nameArgumentsTypeName; // 0x04C
-                uint16_t nameArgumentsNumber;   // 0x04E
+                LE<StringId> nameArgumentsTypeName; // 0x04C
+                LE<uint16_t> nameArgumentsNumber;   // 0x04E
             };
         };
         RCT12xy8 overallView;                                // 0x050
@@ -136,10 +137,10 @@ namespace OpenRCT2::RCT2
         uint8_t trainAtStation[Limits::kMaxStationsPerRide];   // 0x066
         RCT12xy8 entrances[Limits::kMaxStationsPerRide];       // 0x06A
         RCT12xy8 exits[Limits::kMaxStationsPerRide];           // 0x072
-        uint16_t lastPeepInQueue[Limits::kMaxStationsPerRide]; // 0x07A
+        LE<uint16_t> lastPeepInQueue[Limits::kMaxStationsPerRide]; // 0x07A
         uint8_t pad082[Limits::kMaxStationsPerRide];           // 0x082, Used to be number of peeps in queue in RCT1, but this
                                                                // has moved.
-        uint16_t vehicles[Limits::kMaxTrainsPerRide];          // 0x086, Points to the first car in the train
+        LE<uint16_t> vehicles[Limits::kMaxTrainsPerRide];          // 0x086, Points to the first car in the train
         uint8_t departFlags;                                   // 0x0C6
 
         // Not sure if these should be uint or sint.
@@ -172,27 +173,27 @@ namespace OpenRCT2::RCT2
         uint8_t specialTrackElements; // 0x0D5
         uint8_t pad0D6[2];            // 0x0D6
         // Use ToHumanReadableSpeed if converting to display
-        int32_t maxSpeed;                            // 0x0D8
-        int32_t averageSpeed;                        // 0x0DC
+        LE<int32_t> maxSpeed;                            // 0x0D8
+        LE<int32_t> averageSpeed;                        // 0x0DC
         uint8_t currentTestSegment;                  // 0x0E0
         uint8_t averageSpeedTestTimeout;             // 0x0E1
         uint8_t pad0E2[0x2];                         // 0x0E2
-        int32_t length[Limits::kMaxStationsPerRide]; // 0x0E4
-        uint16_t time[Limits::kMaxStationsPerRide];  // 0x0F4
-        fixed16_2dp maxPositiveVerticalG;            // 0x0FC
-        fixed16_2dp maxNegativeVerticalG;            // 0x0FE
-        fixed16_2dp maxLateralG;                     // 0x100
-        fixed16_2dp previousVerticalG;               // 0x102
-        fixed16_2dp previousLateralG;                // 0x104
+        LE<int32_t> length[Limits::kMaxStationsPerRide]; // 0x0E4
+        LE<uint16_t> time[Limits::kMaxStationsPerRide];  // 0x0F4
+        LE<fixed16_2dp> maxPositiveVerticalG;            // 0x0FC
+        LE<fixed16_2dp> maxNegativeVerticalG;            // 0x0FE
+        LE<fixed16_2dp> maxLateralG;                     // 0x100
+        LE<fixed16_2dp> previousVerticalG;               // 0x102
+        LE<fixed16_2dp> previousLateralG;                // 0x104
         uint8_t pad106[0x2];                         // 0x106
-        uint32_t testingFlags;                       // 0x108
+        LE<uint32_t> testingFlags;                       // 0x108
         // x y map location of the current track piece during a test
         // this is to prevent counting special tracks multiple times
         RCT12xy8 curTestTrackLocation; // 0x10C
         // Next 3 variables are related (XXXX XYYY ZZZa aaaa)
-        uint16_t turnCountDefault; // 0x10E X = current turn count
-        uint16_t turnCountBanked;  // 0x110
-        uint16_t turnCountSloped;  // 0x112 X = number turns > 3 elements
+        LE<uint16_t> turnCountDefault; // 0x10E X = current turn count
+        LE<uint16_t> turnCountBanked;  // 0x110
+        LE<uint16_t> turnCountSloped;  // 0x112 X = number turns > 3 elements
         union
         {
             uint8_t inversions; // 0x114 (???X XXXX)
@@ -205,31 +206,31 @@ namespace OpenRCT2::RCT2
         uint8_t drops;             // 0x115 (YYXX XXXX)
         uint8_t startDropHeight;   // 0x116
         uint8_t highestDropHeight; // 0x117
-        int32_t shelteredLength;   // 0x118
+        LE<int32_t> shelteredLength;   // 0x118
         // Unused always 0? Should affect nausea
-        uint16_t var11C;              // 0x11C
+        LE<uint16_t> var11C;              // 0x11C
         uint8_t numShelteredSections; // 0x11E (?abY YYYY)
         // see CurTestTrackLocation
         uint8_t curTestTrackZ; // 0x11F
         // Customer counter in the current 960 game tick (about 30 seconds) interval
-        uint16_t curNumCustomers; // 0x120
+        LE<uint16_t> curNumCustomers; // 0x120
         // Counts ticks to update customer intervals, resets each 960 game ticks.
-        uint16_t numCustomersTimeout; // 0x122
+        LE<uint16_t> numCustomersTimeout; // 0x122
         // Customer count in the last 10 * 960 game ticks (sliding window)
-        uint16_t numCustomers[Limits::kCustomerHistorySize]; // 0x124
-        money16 price;                                       // 0x138
+        LE<uint16_t> numCustomers[Limits::kCustomerHistorySize]; // 0x124
+        LE<money16> price;                                       // 0x138
         RCT12xy8 chairliftBullwheelLocation[2];              // 0x13A
         uint8_t chairliftBullwheelZ[2];                      // 0x13E
         RideRating::Tuple ratings;                           // 0x140
-        money16 value;                                       // 0x146
-        uint16_t chairliftBullwheelRotation;                 // 0x148
+        LE<money16> value;                                       // 0x146
+        LE<uint16_t> chairliftBullwheelRotation;                 // 0x148
         uint8_t satisfaction;                                // 0x14A
         uint8_t satisfactionTimeOut;                         // 0x14B
         uint8_t satisfactionNext;                            // 0x14C
         RideInvalidateFlags windowInvalidateFlags;           // 0x14D
         uint8_t pad14E[0x02];                                // 0x14E
-        uint32_t totalCustomers;                             // 0x150
-        money32 totalProfit;                                 // 0x154
+        LE<uint32_t> totalCustomers;                             // 0x150
+        LE<money32> totalProfit;                                 // 0x154
         uint8_t popularity;                                  // 0x158
         uint8_t popularityTimeOut;                           // 0x159 Updated every purchase and ?possibly by time?
         uint8_t popularityNext;                              // 0x15A When timeout reached this will be the next popularity
@@ -238,27 +239,27 @@ namespace OpenRCT2::RCT2
         uint8_t slideInUse;                                  // 0x15D
         union
         {
-            uint16_t slidePeep; // 0x15E
-            uint16_t mazeTiles; // 0x15E
+            LE<uint16_t> slidePeep; // 0x15E
+            LE<uint16_t> mazeTiles; // 0x15E
         };
         uint8_t pad160[0xE];                   // 0x160
         Drawing::Colour slidePeepTShirtColour; // 0x16E
         uint8_t pad16F[0x7];                   // 0x16F
         uint8_t spiralSlideProgress;           // 0x176
         uint8_t pad177[0x9];                   // 0x177
-        int16_t buildDate;                     // 0x180
-        money16 upkeepCost;                    // 0x182
-        uint16_t raceWinner;                   // 0x184
+        LE<int16_t> buildDate;                     // 0x180
+        LE<money16> upkeepCost;                    // 0x182
+        LE<uint16_t> raceWinner;                   // 0x184
         uint8_t pad186[0x02];                  // 0x186
-        uint32_t musicPosition;                // 0x188
+        LE<uint32_t> musicPosition;                // 0x188
         Breakdown breakdownReasonPending;      // 0x18C
         MechanicStatus mechanicStatus;         // 0x18D
-        uint16_t mechanic;                     // 0x18E
+        LE<uint16_t> mechanic;                     // 0x18E
         uint8_t inspectionStation;             // 0x190
         uint8_t brokenTrain;                   // 0x191
         uint8_t brokenCar;                     // 0x192
         Breakdown breakdownReason;             // 0x193
-        money16 priceSecondary;                // 0x194
+        LE<money16> priceSecondary;                // 0x194
         union
         {
             struct
@@ -266,7 +267,7 @@ namespace OpenRCT2::RCT2
                 uint8_t reliabilitySubvalue;   // 0x196, 0 - 255, acts like the decimals for reliabilityPercentage
                 uint8_t reliabilityPercentage; // 0x197, Starts at 100 and decreases from there.
             };
-            uint16_t reliability; // 0x196
+            LE<uint16_t> reliability; // 0x196
         };
         // Small constant used to increase the unreliability as the game continues,
         // making breakdowns more and more likely.
@@ -276,37 +277,37 @@ namespace OpenRCT2::RCT2
         uint8_t inspectionInterval;                            // 0x19A
         uint8_t lastInspection;                                // 0x19B
         uint8_t downtimeHistory[Limits::kDowntimeHistorySize]; // 0x19C
-        uint32_t numPrimaryItemsSold;                          // 0x1A4
-        uint32_t numSecondaryItemsSold;                        // 0x1A8
+        LE<uint32_t> numPrimaryItemsSold;                          // 0x1A4
+        LE<uint32_t> numSecondaryItemsSold;                        // 0x1A8
         uint8_t breakdownSoundModifier;                        // 0x1AC
         // Used to oscillate the sound when ride breaks down.
         // 0 = no change, 255 = max change
         uint8_t notFixedTimeout;                                            // 0x1AD
         uint8_t lastCrashType;                                              // 0x1AE
         uint8_t connectedMessageThrottle;                                   // 0x1AF
-        money32 incomePerHour;                                              // 0x1B0
-        money32 profit;                                                     // 0x1B4
+        LE<money32> incomePerHour;                                              // 0x1B0
+        LE<money32> profit;                                                     // 0x1B4
         uint8_t queueTime[Limits::kMaxStationsPerRide];                     // 0x1B8
         Drawing::Colour trackColourMain[Limits::kNumColourSchemes];         // 0x1BC
         Drawing::Colour trackColourAdditional[Limits::kNumColourSchemes];   // 0x1C0
         Drawing::Colour trackColourSupports[Limits::kNumColourSchemes];     // 0x1C4
         uint8_t music;                                                      // 0x1C8
         uint8_t entranceStyle;                                              // 0x1C9
-        uint16_t vehicleChangeTimeout;                                      // 0x1CA
+        LE<uint16_t> vehicleChangeTimeout;                                      // 0x1CA
         uint8_t numBlockBrakes;                                             // 0x1CC
         uint8_t liftHillSpeed;                                              // 0x1CD
-        uint16_t guestsFavourite;                                           // 0x1CE
-        uint32_t flags;                                                     // 0x1D0
+        LE<uint16_t> guestsFavourite;                                           // 0x1CE
+        LE<uint32_t> flags;                                                     // 0x1D0
         Drawing::Colour vehicleColoursExtended[Limits::kMaxVehicleColours]; // 0x1D4
-        uint16_t totalAirTime;                                              // 0x1F4
+        LE<uint16_t> totalAirTime;                                              // 0x1F4
         uint8_t currentTestStation;                                         // 0x1F6
         uint8_t numCircuits;                                                // 0x1F7
-        int16_t cableLiftX;                                                 // 0x1F8
-        int16_t cableLiftY;                                                 // 0x1FA
+        LE<int16_t> cableLiftX;                                                 // 0x1F8
+        LE<int16_t> cableLiftY;                                                 // 0x1FA
         uint8_t cableLiftZ;                                                 // 0x1FC
         uint8_t pad1FD;                                                     // 0x1FD
-        uint16_t cableLift;                                                 // 0x1FE
-        uint16_t queueLength[Limits::kMaxStationsPerRide];                  // 0x200
+        LE<uint16_t> cableLift;                                                 // 0x1FE
+        LE<uint16_t> queueLength[Limits::kMaxStationsPerRide];                  // 0x200
         uint8_t pad208[0x58];                                               // 0x208
 
         uint8_t getMinCarsPerTrain() const;
@@ -319,8 +320,8 @@ namespace OpenRCT2::RCT2
     {
         int8_t z;          // 0x00
         uint8_t direction; // 0x01
-        int16_t x;         // 0x02
-        int16_t y;         // 0x04
+        LE<int16_t> x;         // 0x02
+        LE<int16_t> y;         // 0x04
 
         constexpr Direction GetDirection() const
         {
@@ -357,7 +358,7 @@ namespace OpenRCT2::RCT2
     {
         uint8_t Type; // 0x00
         RCT12ObjectEntryIndex VehicleType;
-        uint32_t Flags;                                               // 0x02
+        LE<uint32_t> Flags;                                               // 0x02
         uint8_t RideMode;                                             // 0x06
         uint8_t VersionAndColourScheme;                               // 0x07 0b0000_VVCC
         RCT12VehicleColour VehicleColours[Limits::kMaxTrainsPerRide]; // 0x08
@@ -372,7 +373,7 @@ namespace OpenRCT2::RCT2
         uint8_t OperationSetting;                                     // 0x50
         int8_t MaxSpeed;                                              // 0x51
         int8_t AverageSpeed;                                          // 0x52
-        uint16_t RideLength;                                          // 0x53
+        LE<uint16_t> RideLength;                                          // 0x53
         uint8_t MaxPositiveVerticalG;                                 // 0x55
         int8_t MaxNegativeVerticalG;                                  // 0x56
         uint8_t MaxLateralG;                                          // 0x57
@@ -386,11 +387,11 @@ namespace OpenRCT2::RCT2
         uint8_t Excitement;                                            // 0x5B
         uint8_t Intensity;                                             // 0x5C
         uint8_t Nausea;                                                // 0x5D
-        money16 UpkeepCost;                                            // 0x5E
+        LE<money16> UpkeepCost;                                            // 0x5E
         Drawing::Colour TrackSpineColour[Limits::kNumColourSchemes];   // 0x60
         Drawing::Colour TrackRailColour[Limits::kNumColourSchemes];    // 0x64
         Drawing::Colour TrackSupportColour[Limits::kNumColourSchemes]; // 0x68
-        uint32_t Flags2;                                               // 0x6C
+        LE<uint32_t> Flags2;                                               // 0x6C
         RCTObjectEntry VehicleObject;                                  // 0x70
         uint8_t SpaceRequiredX;                                        // 0x80
         uint8_t SpaceRequiredY;                                        // 0x81
@@ -406,10 +407,10 @@ namespace OpenRCT2::RCT2
      */
     struct ScoresHeader
     {
-        uint32_t Var0;
-        uint32_t Var4;
-        uint32_t Var8;
-        uint32_t ScenarioCount;
+        LE<uint32_t> Var0;
+        LE<uint32_t> Var4;
+        LE<uint32_t> Var8;
+        LE<uint32_t> ScenarioCount;
     };
     static_assert(sizeof(ScoresHeader) == 0x10);
 
@@ -424,12 +425,12 @@ namespace OpenRCT2::RCT2
         uint8_t Pad0101[0x1F];
         Scenario::ObjectiveType ObjectiveType;
         int8_t ObjectiveArg1;
-        int32_t objectiveArg2;
-        uint16_t objectiveArg3;
+        LE<int32_t> objectiveArg2;
+        LE<uint16_t> objectiveArg3;
         char Name[64];
         char Details[256];
-        int32_t Flags;
-        money32 CompanyValue;
+        LE<int32_t> Flags;
+        LE<money32> CompanyValue;
         char CompletedBy[64];
     };
     static_assert(sizeof(ScoresEntry) == 0x02B0);
@@ -439,15 +440,15 @@ namespace OpenRCT2::RCT2
         VehiclePitch pitch; // 0x1F
         VehicleRoll roll;   // 0x20
         uint8_t Pad21[3];
-        int32_t RemainingDistance;  // 0x24
-        int32_t Velocity;           // 0x28
-        int32_t Acceleration;       // 0x2C
+        LE<int32_t> RemainingDistance;  // 0x24
+        LE<int32_t> Velocity;           // 0x28
+        LE<int32_t> Acceleration;       // 0x2C
         uint8_t Ride;               // 0x30
         uint8_t VehicleType;        // 0x31
         RCT12VehicleColour Colours; // 0x32
         union
         {
-            uint16_t TrackProgress; // 0x34
+            LE<uint16_t> TrackProgress; // 0x34
             struct
             {
                 int8_t Var34;
@@ -456,24 +457,24 @@ namespace OpenRCT2::RCT2
         };
         union
         {
-            int16_t TrackTypeAndDirection; // 0x36
+            LE<int16_t> TrackTypeAndDirection; // 0x36
             RCT12xy8 BoatLocation;         // 0x36
         };
-        uint16_t TrackX;             // 0x38
-        uint16_t TrackY;             // 0x3A
-        uint16_t TrackZ;             // 0x3C
-        uint16_t NextVehicleOnTrain; // 0x3E
-        uint16_t PrevVehicleOnRide;  // 0x40
-        uint16_t NextVehicleOnRide;  // 0x42
-        uint16_t Var44;
-        uint16_t Mass;        // 0x46
-        uint16_t UpdateFlags; // 0x48
+        LE<uint16_t> TrackX;             // 0x38
+        LE<uint16_t> TrackY;             // 0x3A
+        LE<uint16_t> TrackZ;             // 0x3C
+        LE<uint16_t> NextVehicleOnTrain; // 0x3E
+        LE<uint16_t> PrevVehicleOnRide;  // 0x40
+        LE<uint16_t> NextVehicleOnRide;  // 0x42
+        LE<uint16_t> Var44;
+        LE<uint16_t> Mass;        // 0x46
+        LE<uint16_t> UpdateFlags; // 0x48
         uint8_t SwingSprite;
         uint8_t CurrentStation; // 0x4B
         union
         {
-            int16_t SwingPosition; // 0x4C
-            int16_t CurrentTime;   // 0x4C
+            LE<int16_t> SwingPosition; // 0x4C
+            LE<int16_t> CurrentTime;   // 0x4C
             struct
             {
                 int8_t FerrisWheelVar0; // 0x4C
@@ -482,12 +483,12 @@ namespace OpenRCT2::RCT2
         };
         union
         {
-            int16_t SwingSpeed;
-            int16_t CrashZ; // 0x4E
+            LE<int16_t> SwingSpeed;
+            LE<int16_t> CrashZ; // 0x4E
         };
         uint8_t Status;                        // 0x50
         uint8_t SubState;                      // 0x51
-        uint16_t Peep[32];                     // 0x52
+        LE<uint16_t> Peep[32];                     // 0x52
         Drawing::Colour PeepTshirtColours[32]; // 0x92
         uint8_t NumSeats;                      // 0xB2
         uint8_t NumPeeps;                      // 0xB3
@@ -495,10 +496,10 @@ namespace OpenRCT2::RCT2
         uint8_t RestraintsPosition;            // 0xB5
         union
         {
-            int16_t SpinSpeed; // 0xB6
-            int16_t CrashX;    // 0xB6
+            LE<int16_t> SpinSpeed; // 0xB6
+            LE<int16_t> CrashX;    // 0xB6
         };
-        uint16_t Sound2Flags; // 0xB8
+        LE<uint16_t> Sound2Flags; // 0xB8
         uint8_t SpinSprite;   // 0xBA
         uint8_t Sound1Id;     // 0xBB
         uint8_t Sound1Volume; // 0xBC
@@ -507,10 +508,10 @@ namespace OpenRCT2::RCT2
         int8_t SoundVectorFactor;
         union
         {
-            uint16_t VarC0;
-            int16_t CrashY;           // 0xC0
-            uint16_t TimeWaiting;     // 0xC0
-            uint16_t CableLiftTarget; // 0xC0
+            LE<uint16_t> VarC0;
+            LE<int16_t> CrashY;           // 0xC0
+            LE<uint16_t> TimeWaiting;     // 0xC0
+            LE<uint16_t> CableLiftTarget; // 0xC0
         };
         uint8_t Speed;               // 0xC2
         uint8_t PoweredAcceleration; // 0xC3
@@ -521,12 +522,12 @@ namespace OpenRCT2::RCT2
         };
         uint8_t AnimationFrame; // 0xC5
         uint8_t PadC6[0x2];
-        uint32_t AnimationState;
+        LE<uint32_t> AnimationState;
         uint8_t ScreamSoundId; // 0xCC
         uint8_t TrackSubposition;
         uint8_t NumLaps;              // 0xCE
         uint8_t BrakeSpeed;           // 0xCF
-        uint16_t LostTimeOut;         // 0xD0
+        LE<uint16_t> LostTimeOut;         // 0xD0
         int8_t VerticalDropCountdown; // 0xD1
         uint8_t VarD3;
         uint8_t MiniGolfCurrentAnimation;
@@ -562,9 +563,9 @@ namespace OpenRCT2::RCT2
     struct Peep : RCT12EntityBase
     {
         uint8_t Pad1F[0x22 - 0x1F];
-        StringId NameStringIdx; // 0x22
-        uint16_t NextX;         // 0x24
-        uint16_t NextY;         // 0x26
+        LE<StringId> NameStringIdx; // 0x22
+        LE<uint16_t> NextX;         // 0x24
+        LE<uint16_t> NextY;         // 0x26
         uint8_t NextZ;          // 0x28
         uint8_t NextFlags;      // 0x29
         uint8_t OutsideOfPark;  // 0x2A
@@ -579,8 +580,8 @@ namespace OpenRCT2::RCT2
         };
         Drawing::Colour TshirtColour;   // 0x30
         Drawing::Colour TrousersColour; // 0x31
-        uint16_t DestinationX;          // 0x32
-        uint16_t DestinationY;          // 0x34
+        LE<uint16_t> DestinationX;          // 0x32
+        LE<uint16_t> DestinationY;          // 0x34
         uint8_t DestinationTolerance;   // 0x36
         uint8_t Var37;
         uint8_t Energy;                // 0x38
@@ -597,9 +598,9 @@ namespace OpenRCT2::RCT2
         uint8_t Intensity;             // 0x43
         uint8_t NauseaTolerance;       // 0x44
         uint8_t WindowInvalidateFlags; // 0x45
-        money16 PaidOnDrink;           // 0x46
+        LE<money16> PaidOnDrink;           // 0x46
         uint8_t RideTypesBeenOn[16];   // 0x48
-        uint32_t ItemExtraFlags;       // 0x58
+        LE<uint32_t> ItemExtraFlags;       // 0x58
         RCT12RideId Photo2RideRef;     // 0x5C
         RCT12RideId Photo3RideRef;     // 0x5D
         RCT12RideId Photo4RideRef;     // 0x5E
@@ -614,7 +615,7 @@ namespace OpenRCT2::RCT2
                 uint8_t CurrentCar;  // 0x6B
                 uint8_t CurrentSeat; // 0x6C
             };
-            uint16_t TimeToSitdown; // 0x6B
+            LE<uint16_t> TimeToSitdown; // 0x6B
             struct
             {
                 uint8_t TimeToStand;   // 0x6B
@@ -630,8 +631,8 @@ namespace OpenRCT2::RCT2
         uint8_t StepProgress;           // 0x73
         union
         {
-            uint16_t MechanicTimeSinceCall;
-            uint16_t NextInQueue; // 0x74
+            LE<uint16_t> MechanicTimeSinceCall;
+            LE<uint16_t> NextInQueue; // 0x74
         };
         uint8_t Pad76;
         uint8_t Pad77;
@@ -641,15 +642,15 @@ namespace OpenRCT2::RCT2
             uint8_t Direction;
         };
         RCT12RideId InteractionRideIndex;
-        uint16_t TimeInQueue;                                // 0x7A
+        LE<uint16_t> TimeInQueue;                                // 0x7A
         uint8_t RidesBeenOn[32];                             // 0x7C
-        uint32_t Id;                                         // 0x9C
-        money32 CashInPocket;                                // 0xA0
-        money32 CashSpent;                                   // 0xA4
-        int32_t ParkEntryTime;                               // 0xA8
+        LE<uint32_t> Id;                                         // 0x9C
+        LE<money32> CashInPocket;                                // 0xA0
+        LE<money32> CashSpent;                                   // 0xA4
+        LE<int32_t> ParkEntryTime;                               // 0xA8
         int8_t RejoinQueueTimeout;                           // 0xAC
         RCT12RideId PreviousRide;                            // 0xAD
-        uint16_t PreviousRideTimeOut;                        // 0xAE
+        LE<uint16_t> PreviousRideTimeOut;                        // 0xAE
         RCT12PeepThought Thoughts[Limits::kMaxPeepThoughts]; // 0xB0
         uint8_t PathCheckOptimisation;                       // 0xC4
         union
@@ -663,7 +664,7 @@ namespace OpenRCT2::RCT2
             uint8_t PeepIsLostCountdown; // 0xC6
         };
         RCT12RideId Photo1RideRef;     // 0xC7
-        uint32_t PeepFlags;            // 0xC8
+        LE<uint32_t> PeepFlags;            // 0xC8
         RCT12xyzd8 PathfindGoal;       // 0xCC
         RCT12xyzd8 PathfindHistory[4]; // 0xD0
         uint8_t NoActionFrameNum;      // 0xE0
@@ -676,25 +677,25 @@ namespace OpenRCT2::RCT2
         uint8_t DisgustingCount; // 0xE3
         union
         {
-            money16 PaidToEnter;      // 0xE4
-            uint16_t StaffLawnsMown;  // 0xE4
-            uint16_t StaffRidesFixed; // 0xE4
+            LE<money16> PaidToEnter;      // 0xE4
+            LE<uint16_t> StaffLawnsMown;  // 0xE4
+            LE<uint16_t> StaffRidesFixed; // 0xE4
         };
         union
         {
-            money16 PaidOnRides;          // 0xE6
-            uint16_t StaffGardensWatered; // 0xE6
-            uint16_t StaffRidesInspected; // 0xE6
+            LE<money16> PaidOnRides;          // 0xE6
+            LE<uint16_t> StaffGardensWatered; // 0xE6
+            LE<uint16_t> StaffRidesInspected; // 0xE6
         };
         union
         {
-            money16 PaidOnFood;        // 0xE8
-            uint16_t StaffLitterSwept; // 0xE8
+            LE<money16> PaidOnFood;        // 0xE8
+            LE<uint16_t> StaffLitterSwept; // 0xE8
         };
         union
         {
-            money16 PaidOnSouvenirs;   // 0xEA
-            uint16_t StaffBinsEmptied; // 0xEA
+            LE<money16> PaidOnSouvenirs;   // 0xEA
+            LE<uint16_t> StaffBinsEmptied; // 0xEA
         };
         uint8_t NoOfFood;                   // 0xEC
         uint8_t NoOfDrinks;                 // 0xED
@@ -712,7 +713,7 @@ namespace OpenRCT2::RCT2
         RCT12RideId FavouriteRide;      // 0xF9
         uint8_t FavouriteRideRating;    // 0xFA
         uint8_t PadFB;
-        uint32_t ItemStandardFlags; // 0xFC
+        LE<uint32_t> ItemStandardFlags; // 0xFC
         uint64_t GetItemFlags() const
         {
             return ItemStandardFlags | (static_cast<uint64_t>(ItemExtraFlags) << 32);
@@ -750,21 +751,21 @@ namespace OpenRCT2::RCT2
 
     struct RideRatingCalculationData
     {
-        uint16_t ProximityX;
-        uint16_t ProximityY;
-        uint16_t ProximityZ;
-        uint16_t ProximityStartX;
-        uint16_t ProximityStartY;
-        uint16_t ProximityStartZ;
+        LE<uint16_t> ProximityX;
+        LE<uint16_t> ProximityY;
+        LE<uint16_t> ProximityZ;
+        LE<uint16_t> ProximityStartX;
+        LE<uint16_t> ProximityStartY;
+        LE<uint16_t> ProximityStartZ;
         uint8_t CurrentRide;
         uint8_t State;
         RCT12::TrackElemType ProximityTrackType;
         uint8_t ProximityBaseHeight;
-        uint16_t ProximityTotal;
-        uint16_t ProximityScores[26];
-        uint16_t NumBrakes;
-        uint16_t NumReversers;
-        uint16_t StationFlags;
+        LE<uint16_t> ProximityTotal;
+        LE<uint16_t> ProximityScores[26];
+        LE<uint16_t> NumBrakes;
+        LE<uint16_t> NumReversers;
+        LE<uint16_t> StationFlags;
     };
     static_assert(sizeof(RideRatingCalculationData) == 76);
 
@@ -776,9 +777,9 @@ namespace OpenRCT2::RCT2
     {
         uint8_t Type;              // 0x00
         uint8_t ClassicFlag;       // 0x01
-        uint16_t NumPackedObjects; // 0x02
-        uint32_t Version;          // 0x04
-        uint32_t MagicNumber;      // 0x08
+        LE<uint16_t> NumPackedObjects; // 0x02
+        LE<uint32_t> Version;          // 0x04
+        LE<uint32_t> MagicNumber;      // 0x08
         uint8_t Pad0C[0x14];
     };
     static_assert(sizeof(S6Header) == 0x20);
@@ -793,8 +794,8 @@ namespace OpenRCT2::RCT2
         Scenario::Category Category;           // 0x01
         Scenario::ObjectiveType ObjectiveType; // 0x02
         uint8_t ObjectiveArg1;                 // 0x03
-        int32_t ObjectiveArg2;                 // 0x04
-        uint16_t ObjectiveArg3;                // 0x08
+        LE<int32_t> ObjectiveArg2;                 // 0x04
+        LE<uint16_t> ObjectiveArg3;                // 0x08
         uint8_t Pad00A[0x3E];
         char Name[64];        // 0x48
         char Details[256];    // 0x88
@@ -834,29 +835,29 @@ namespace OpenRCT2::RCT2
         };
 
         // SC6[4]
-        uint16_t ElapsedMonths;
-        uint16_t CurrentDay;
-        uint32_t ScenarioTicks;
-        uint32_t ScenarioSrand0;
-        uint32_t ScenarioSrand1;
+        LE<uint16_t> ElapsedMonths;
+        LE<uint16_t> CurrentDay;
+        LE<uint32_t> ScenarioTicks;
+        LE<uint32_t> ScenarioSrand0;
+        LE<uint32_t> ScenarioSrand1;
 
         // SC6[5]
         RCT12TileElement TileElements[Limits::kMaxTileElements];
 
         // SC6[6]
-        uint32_t NextFreeTileElementPointerIndex;
+        LE<uint32_t> NextFreeTileElementPointerIndex;
         Entity Entities[Limits::kMaxEntitiesRCTCExtended];
-        uint16_t EntityListsHead[EnumValue(EntityListId::count)];
-        uint16_t EntityListsCount[EnumValue(EntityListId::count)];
-        StringId ParkName;
+        LE<uint16_t> EntityListsHead[EnumValue(EntityListId::count)];
+        LE<uint16_t> EntityListsCount[EnumValue(EntityListId::count)];
+        LE<StringId> ParkName;
         uint8_t Pad013573D6[2];
-        uint32_t ParkNameArgs;
-        money32 InitialCash;
-        money32 CurrentLoan;
-        uint32_t ParkFlags;
-        money16 ParkEntranceFee;
-        uint16_t RCT1ParkEntranceX;
-        uint16_t RCT1ParkEntranceY;
+        LE<uint32_t> ParkNameArgs;
+        LE<money32> InitialCash;
+        LE<money32> CurrentLoan;
+        LE<uint32_t> ParkFlags;
+        LE<money16> ParkEntranceFee;
+        LE<uint16_t> RCT1ParkEntranceX;
+        LE<uint16_t> RCT1ParkEntranceY;
         uint8_t Pad013573EE[2];
         uint8_t RCT1ParkEntranceZ;
         uint8_t Pad013573F1;
@@ -864,30 +865,30 @@ namespace OpenRCT2::RCT2
         uint8_t GuestCountChangeModifier;
         uint8_t CurrentResearchLevel;
         uint8_t Pad01357400[4];
-        uint32_t ResearchedRideTypes[Limits::kMaxResearchedRideTypeQuads];
-        uint32_t ResearchedRideEntries[Limits::kMaxResearchedRideEntryQuads];
-        uint32_t ResearchedTrackTypesA[128];
-        uint32_t ResearchedTrackTypesB[128];
+        LE<uint32_t> ResearchedRideTypes[Limits::kMaxResearchedRideTypeQuads];
+        LE<uint32_t> ResearchedRideEntries[Limits::kMaxResearchedRideEntryQuads];
+        LE<uint32_t> ResearchedTrackTypesA[128];
+        LE<uint32_t> ResearchedTrackTypesB[128];
 
         // SC6[7]
-        uint16_t GuestsInPark;
-        uint16_t GuestsHeadingForPark;
+        LE<uint16_t> GuestsInPark;
+        LE<uint16_t> GuestsHeadingForPark;
 
         // Ignored in scenario
-        money32 ExpenditureTable[Limits::kExpenditureTableMonthCount][Limits::kExpenditureTypeCount];
+        LE<money32> ExpenditureTable[Limits::kExpenditureTableMonthCount][Limits::kExpenditureTypeCount];
 
         // SC6[8]
-        uint16_t LastGuestsInPark;
+        LE<uint16_t> LastGuestsInPark;
         uint8_t Pad01357BCA[3];
         Drawing::Colour HandymanColour;
         Drawing::Colour MechanicColour;
         Drawing::Colour SecurityColour;
 
         // Ignored in scenario
-        uint32_t ResearchedSceneryItems[Limits::kMaxResearchedSceneryItemQuads];
+        LE<uint32_t> ResearchedSceneryItems[Limits::kMaxResearchedSceneryItemQuads];
 
         // SC6[9]
-        uint16_t ParkRating;
+        LE<uint16_t> ParkRating;
 
         // Ignored in scenario
         uint8_t ParkRatingHistory[kParkRatingHistorySize];
@@ -896,113 +897,113 @@ namespace OpenRCT2::RCT2
         // SC6[10]
         uint8_t ActiveResearchTypes;
         uint8_t ResearchProgressStage;
-        uint32_t LastResearchedItemSubject;
+        LE<uint32_t> LastResearchedItemSubject;
         uint8_t Pad01357CF8[1000];
-        uint32_t NextResearchItem;
-        uint16_t ResearchProgress;
+        LE<uint32_t> NextResearchItem;
+        LE<uint16_t> ResearchProgress;
         uint8_t NextResearchCategory;
         uint8_t NextResearchExpectedDay;
         uint8_t NextResearchExpectedMonth;
         uint8_t GuestInitialHappiness;
-        uint16_t ParkSize;
-        uint16_t GuestGenerationProbability;
-        uint16_t TotalRideValueForMoney;
-        money32 MaximumLoan;
-        money16 GuestInitialCash;
+        LE<uint16_t> ParkSize;
+        LE<uint16_t> GuestGenerationProbability;
+        LE<uint16_t> TotalRideValueForMoney;
+        LE<money32> MaximumLoan;
+        LE<money16> GuestInitialCash;
         uint8_t GuestInitialHunger;
         uint8_t GuestInitialThirst;
         Scenario::ObjectiveType ObjectiveType;
         uint8_t ObjectiveYear;
         uint8_t Pad013580FA[2];
-        money32 ObjectiveCurrency;
-        uint16_t ObjectiveGuests;
+        LE<money32> ObjectiveCurrency;
+        LE<uint16_t> ObjectiveGuests;
         uint8_t CampaignWeeksLeft[20];
         uint8_t CampaignRideIndex[22];
 
         // Ignored in scenario
-        money32 BalanceHistory[Limits::kFinanceGraphSize];
+        LE<money32> BalanceHistory[Limits::kFinanceGraphSize];
 
         // SC6[11]
-        money32 CurrentExpenditure;
-        money32 CurrentProfit;
-        money32 WeeklyProfitAverageDividend;
-        uint16_t WeeklyProfitAverageDivisor;
+        LE<money32> CurrentExpenditure;
+        LE<money32> CurrentProfit;
+        LE<money32> WeeklyProfitAverageDividend;
+        LE<uint16_t> WeeklyProfitAverageDivisor;
         uint8_t Pad0135833A[2];
 
         // Ignored in scenario
-        money32 WeeklyProfitHistory[Limits::kFinanceGraphSize];
+        LE<money32> WeeklyProfitHistory[Limits::kFinanceGraphSize];
 
         // SC6[12]
-        money32 ParkValue;
+        LE<money32> ParkValue;
 
         // Ignored in scenario
-        money32 ParkValueHistory[Limits::kFinanceGraphSize];
+        LE<money32> ParkValueHistory[Limits::kFinanceGraphSize];
 
         // SC6[13]
-        money32 CompletedCompanyValue;
-        uint32_t TotalAdmissions;
-        money32 IncomeFromAdmissions;
-        money32 CompanyValue;
+        LE<money32> CompletedCompanyValue;
+        LE<uint32_t> TotalAdmissions;
+        LE<money32> IncomeFromAdmissions;
+        LE<money32> CompanyValue;
         uint8_t PeepWarningThrottle[16];
         RCT12Award Awards[Limits::kMaxAwards];
-        money16 LandPrice;
-        money16 ConstructionRightsPrice;
-        uint16_t Word01358774;
+        LE<money16> LandPrice;
+        LE<money16> ConstructionRightsPrice;
+        LE<uint16_t> Word01358774;
         uint8_t Pad01358776[2];
-        uint32_t CDKey;
+        LE<uint32_t> CDKey;
         uint8_t Pad0135877C[64];
-        uint32_t GameVersionNumber;
-        money32 CompletedCompanyValueRecord;
-        uint32_t LoanHash;
-        uint16_t RideCount;
+        LE<uint32_t> GameVersionNumber;
+        LE<money32> CompletedCompanyValueRecord;
+        LE<uint32_t> LoanHash;
+        LE<uint16_t> RideCount;
         uint8_t Pad013587CA[6];
-        money32 HistoricalProfit;
+        LE<money32> HistoricalProfit;
         uint8_t Pad013587D4[4];
         char ScenarioCompletedName[32];
-        money32 Cash;
+        LE<money32> Cash;
         uint8_t Pad013587FC[50];
-        uint16_t ParkRatingCasualtyPenalty;
-        uint16_t MapSizeUnits;
-        uint16_t MapSizeMinus2;
-        uint16_t MapSize;
-        uint16_t MapMaxXy;
-        uint32_t SamePriceThroughout;
-        uint16_t SuggestedMaxGuests;
-        uint16_t ParkRatingWarningDays;
+        LE<uint16_t> ParkRatingCasualtyPenalty;
+        LE<uint16_t> MapSizeUnits;
+        LE<uint16_t> MapSizeMinus2;
+        LE<uint16_t> MapSize;
+        LE<uint16_t> MapMaxXy;
+        LE<uint32_t> SamePriceThroughout;
+        LE<uint16_t> SuggestedMaxGuests;
+        LE<uint16_t> ParkRatingWarningDays;
         uint8_t LastEntranceStyle;
         uint8_t RCT1WaterColour;
         uint8_t Pad01358842[2];
         RCT12ResearchItem ResearchItems[Limits::kMaxResearchItems];
-        uint16_t MapBaseZ;
+        LE<uint16_t> MapBaseZ;
         char ScenarioName[64];
         char ScenarioDescription[256];
         uint8_t CurrentInterestRate;
         uint8_t Pad0135934B;
-        uint32_t SamePriceThroughoutExtended;
-        int16_t ParkEntranceX[Limits::kMaxParkEntrances];
-        int16_t ParkEntranceY[Limits::kMaxParkEntrances];
-        int16_t ParkEntranceZ[Limits::kMaxParkEntrances];
+        LE<uint32_t> SamePriceThroughoutExtended;
+        LE<int16_t> ParkEntranceX[Limits::kMaxParkEntrances];
+        LE<int16_t> ParkEntranceY[Limits::kMaxParkEntrances];
+        LE<int16_t> ParkEntranceZ[Limits::kMaxParkEntrances];
         uint8_t ParkEntranceDirection[Limits::kMaxParkEntrances];
         char ScenarioFilename[256];
         uint8_t SavedExpansionPackNames[3256];
         RCT12Banner Banners[Limits::kMaxBanners];
         char CustomStrings[Limits::kMaxUserStrings][Limits::kMaxUserStringLength];
-        uint32_t GameTicks1;
+        LE<uint32_t> GameTicks1;
         Ride Rides[Limits::kMaxRidesInPark];
-        uint16_t SavedAge; // unused
-        int16_t SavedViewX;
-        int16_t SavedViewY;
+        LE<uint16_t> SavedAge; // unused
+        LE<int16_t> SavedViewX;
+        LE<int16_t> SavedViewY;
         uint8_t SavedViewZoom;
         uint8_t SavedViewRotation;
         RCT12MapAnimation MapAnimations[Limits::kMaxAnimatedObjects];
-        uint16_t NumMapAnimations;
+        LE<uint16_t> NumMapAnimations;
         uint8_t Pad0138B582[2];
         RideRatingCalculationData RideRatingsCalcData;
         uint8_t Pad0138B5D0[60];
         RCT12RideMeasurement RideMeasurements[8];
-        uint32_t NextGuestIndex;
-        uint16_t GrassAndSceneryTilepos;
-        uint32_t PatrolAreas[(Limits::kMaxStaff + Limits::kStaffTypeCount) * Limits::kPatrolAreaSize];
+        LE<uint32_t> NextGuestIndex;
+        LE<uint16_t> GrassAndSceneryTilepos;
+        LE<uint32_t> PatrolAreas[(Limits::kMaxStaff + Limits::kStaffTypeCount) * Limits::kPatrolAreaSize];
         StaffMode StaffModes[Limits::kMaxStaff + Limits::kStaffTypeCount];
         uint8_t Pad13CA73E;
         uint8_t Pad13CA73F;
@@ -1011,7 +1012,7 @@ namespace OpenRCT2::RCT2
         uint8_t Byte13CA742[4]; // unused
         RCT12::ClimateType Climate;
         uint8_t Pad013CA747;
-        uint16_t WeatherUpdateTimer;
+        LE<uint16_t> WeatherUpdateTimer;
         uint8_t CurrentWeather;
         uint8_t NextWeather;
         uint8_t Temperature;
@@ -1025,19 +1026,19 @@ namespace OpenRCT2::RCT2
         RCT12NewsItem recentMessages[Limits::kMaxRecentNewsItems];
         RCT12NewsItem archivedMessages[Limits::kMaxArchivedNewsItems];
         char RCT1ScenarioName[62];      // Unused in RCT2
-        uint16_t RCT1ScenarioSlotIndex; // Unused in RCT2
-        uint32_t RCT1ScenarioFlags;     // Unused in RCT2
-        uint16_t WidePathTileLoopX;
-        uint16_t WidePathTileLoopY;
+        LE<uint16_t> RCT1ScenarioSlotIndex; // Unused in RCT2
+        LE<uint32_t> RCT1ScenarioFlags;     // Unused in RCT2
+        LE<uint16_t> WidePathTileLoopX;
+        LE<uint16_t> WidePathTileLoopY;
         uint8_t Pad13CE778[434];
     };
     static_assert(sizeof(S6Data) == 0x5a3c4a);
 
     struct StexEntry
     {
-        StringId ScenarioName; // 0x00
-        StringId ParkName;     // 0x02
-        StringId Details;      // 0x04
+        LE<StringId> ScenarioName; // 0x00
+        LE<StringId> ParkName;     // 0x02
+        LE<StringId> Details;      // 0x04
         uint8_t Var06;
     };
     static_assert(sizeof(StexEntry) == 7);

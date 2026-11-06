@@ -9,6 +9,8 @@
 
 #include "ParkFile.h"
 
+#include <bit>
+
 #include "../Cheats.h"
 #include "../Context.h"
 #include "../Diagnostic.h"
@@ -71,6 +73,61 @@
 #include <optional>
 #include <string_view>
 #include <vector>
+
+namespace OpenRCT2
+{
+    // Tile elements are stored in park files as raw memory, little-endian. Swap their 16-bit
+    // fields (byte offsets below) between file and native order; a no-op on little-endian hosts.
+    static void SwapTileElementLE(TileElement& el, bool toFile)
+    {
+        if constexpr (std::endian::native == std::endian::little)
+            return;
+        auto* b = reinterpret_cast<uint8_t*>(&el);
+        auto swap16 = [b](size_t off) { std::swap(b[off], b[off + 1]); };
+        switch (el.getType())
+        {
+            case TileElementType::path:
+                swap16(5);
+                swap16(7);
+                if (el.asPath()->isQueue())
+                    swap16(13);
+                break;
+            case TileElementType::track:
+            {
+                if (toFile && el.asTrack()->getTrackType() == TrackElemType::maze)
+                    swap16(7);
+                swap16(5);
+                if (!toFile && el.asTrack()->getTrackType() == TrackElemType::maze)
+                    swap16(7);
+                swap16(12);
+                swap16(14);
+                break;
+            }
+            case TileElementType::smallScenery:
+                swap16(5);
+                break;
+            case TileElementType::entrance:
+                swap16(8);
+                swap16(10);
+                swap16(13);
+                break;
+            case TileElementType::wall:
+                swap16(5);
+                swap16(10);
+                break;
+            case TileElementType::largeScenery:
+                swap16(5);
+                swap16(7);
+                break;
+            case TileElementType::banner:
+                swap16(5);
+                break;
+            default:
+                break;
+        }
+    }
+} // namespace OpenRCT2
+
 
 using namespace OpenRCT2;
 
@@ -1270,6 +1327,8 @@ namespace OpenRCT2
                     if (cs.getMode() == OrcaStream::Mode::writing)
                     {
                         auto tileElements = GetReorganisedTileElementsWithoutGhosts();
+                        for (auto& el : tileElements)
+                            SwapTileElementLE(el, true);
                         cs.write(static_cast<uint32_t>(tileElements.size()));
                         cs.write(tileElements.data(), tileElements.size() * sizeof(TileElement));
                         return;
@@ -1281,6 +1340,8 @@ namespace OpenRCT2
                     std::vector<TileElement> tileElements;
                     tileElements.resize(numElements);
                     cs.read(tileElements.data(), tileElements.size() * sizeof(TileElement));
+                    for (auto& el : tileElements)
+                        SwapTileElementLE(el, false);
                     SetTileElements(gameState, std::move(tileElements));
 
                     auto targetVersion = os.getHeader().targetVersion;
@@ -2078,7 +2139,11 @@ namespace OpenRCT2
             cs.readWrite(entity.currentRide);
             cs.readWrite(entity.currentRideStation);
             cs.readWrite(entity.currentTrain);
-            cs.readWrite(entity.timeToSitdown);
+            {
+                auto union16 = entity.getSaveUnion16();
+                cs.readWrite(union16);
+                entity.setSaveUnion16(union16);
+            }
             cs.readWrite(entity.specialSprite);
             cs.readWrite(entity.animationType);
             cs.readWrite(entity.nextAnimationType);

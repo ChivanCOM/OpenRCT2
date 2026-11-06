@@ -307,7 +307,7 @@ namespace OpenRCT2::Audio
                 self->_bitsPerSample = metadata->data.stream_info.bits_per_sample;
                 self->_totalSamples = metadata->data.stream_info.total_samples;
                 self->_format.freq = metadata->data.stream_info.sample_rate;
-                self->_format.format = AUDIO_S16LSB;
+                self->_format.format = AUDIO_S16SYS; // the decode callback writes native int16_t
                 self->_format.channels = metadata->data.stream_info.channels;
                 self->_dataLength = self->_totalSamples * self->_format.channels * sizeof(int16_t);
             }

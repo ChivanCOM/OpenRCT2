@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "Endianness.h"
+
 #include <cstdint>
 #include <istream>
 #include <memory>
@@ -163,6 +165,8 @@ namespace OpenRCT2
             {
                 Read(&value, sizeof(T));
             }
+            if constexpr (kIsLEScalar<T>)
+                value = ByteSwapLE(value);
         }
 
         /**
@@ -180,8 +184,14 @@ namespace OpenRCT2
          * Writes the given type to the stream
          */
         template<typename T>
-        void WriteValue(const T& value)
+        void WriteValue(const T& valueIn)
         {
+            const T value = [&] {
+                if constexpr (kIsLEScalar<T>)
+                    return ByteSwapLE(valueIn);
+                else
+                    return valueIn;
+            }();
             // Selects the best path at compile time
             if constexpr (sizeof(T) == 1)
             {

@@ -7,6 +7,7 @@
  * OpenRCT2 is licensed under the GNU General Public License version 3.
  *****************************************************************************/
 
+#include "Endianness.h"
 #include "Crypt.h"
 
 #include <cassert>
@@ -31,7 +32,7 @@ private:
         {
             uint64_t temp{};
             std::memcpy(&temp, _rem, _remLen);
-            _data ^= temp;
+            _data ^= ByteSwapLE(temp);
             _data *= kPrime;
             _remLen = 0;
         }
@@ -65,7 +66,7 @@ public:
         // Process every block of 8 bytes
         while (dataLen >= sizeof(uint64_t))
         {
-            auto temp = *src++;
+            auto temp = ByteSwapLE(*src++);
             _data ^= temp;
             _data *= kPrime;
             dataLen -= sizeof(uint64_t);
@@ -85,7 +86,8 @@ public:
         ProcessRemainder();
 
         Result res;
-        std::memcpy(res.data(), &_data, sizeof(_data));
+        const uint64_t data = ByteSwapLE(_data);
+        std::memcpy(res.data(), &data, sizeof(data));
         return res;
     }
 };

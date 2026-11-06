@@ -392,6 +392,26 @@ namespace OpenRCT2
             };
             uint8_t timesSlidDown;
         };
+        // The union above as the little-endian 16-bit value it is saved as: only a sitting guest
+        // uses it as a number (timeToSitdown), otherwise it is two bytes (currentCar/currentSeat,
+        // timeToStand/standingFlags, timesSlidDown) that keep their order on big-endian hosts too.
+        uint16_t getSaveUnion16() const
+        {
+            if (state == PeepState::sitting)
+                return timeToSitdown;
+            return static_cast<uint16_t>(currentCar | (currentSeat << 8));
+        }
+        void setSaveUnion16(uint16_t value)
+        {
+            if (state == PeepState::sitting)
+            {
+                timeToSitdown = value;
+                return;
+            }
+            currentCar = static_cast<uint8_t>(value & 0xFF);
+            currentSeat = static_cast<uint8_t>(value >> 8);
+        }
+
         // Normally 0, 1 for carrying sliding board on spiral slide ride, 2 for carrying lawn mower
         uint8_t specialSprite;
         PeepAnimationType animationType;

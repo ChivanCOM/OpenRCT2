@@ -9,6 +9,9 @@
 
 #include "SawyerCoding.h"
 
+#include "../core/Endianness.h"
+#include <cstring>
+
 #include "../core/Numerics.hpp"
 #include "SawyerChunk.h"
 
@@ -104,8 +107,10 @@ namespace OpenRCT2::SawyerCoding
         {
             dst[i + 1] = Numerics::ror8(dst[i + 1], 3);
 
-            uint32_t* code = reinterpret_cast<uint32_t*>(&dst[i]);
-            *code = Numerics::rol32(*code, 9);
+            uint32_t code;
+            std::memcpy(&code, &dst[i], sizeof(code));
+            code = ByteSwapLE(Numerics::rol32(ByteSwapLE(code), 9));
+            std::memcpy(&dst[i], &code, sizeof(code));
         }
 
         return decodedLength;
@@ -118,7 +123,7 @@ namespace OpenRCT2::SawyerCoding
 
         // Append checksum
         uint32_t checksum = CalculateChecksum(dst, encodedLength);
-        *(reinterpret_cast<uint32_t*>(&dst[encodedLength])) = checksum;
+        *(reinterpret_cast<uint32_t*>(&dst[encodedLength])) = ByteSwapLE(checksum);
 
         return encodedLength + 4;
     }
@@ -141,7 +146,7 @@ namespace OpenRCT2::SawyerCoding
         }
         checksum -= 0x1D4C1;
 
-        *(reinterpret_cast<uint32_t*>(&dst[output_length])) = checksum;
+        *(reinterpret_cast<uint32_t*>(&dst[output_length])) = ByteSwapLE(checksum);
         output_length += 4;
         return output_length;
     }
@@ -152,7 +157,7 @@ namespace OpenRCT2::SawyerCoding
         if (length < 4)
             return 0;
 
-        uint32_t file_checksum = *(reinterpret_cast<const uint32_t*>(&src[length - 4]));
+        uint32_t file_checksum = ByteSwapLE(*(reinterpret_cast<const uint32_t*>(&src[length - 4])));
 
         uint32_t checksum = 0;
         for (size_t i = 0; i < length - 4; i++)

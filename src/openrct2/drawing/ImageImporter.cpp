@@ -7,6 +7,7 @@
  * OpenRCT2 is licensed under the GNU General Public License version 3.
  *****************************************************************************/
 
+#include "../core/Endianness.h"
 #include "ImageImporter.h"
 
 #include "../core/Guard.hpp"
@@ -206,7 +207,7 @@ namespace OpenRCT2::Drawing
         auto dst = buffer.data() + (size.height * 2);
         for (auto y = 0; y < size.height; y++)
         {
-            yOffsets[y] = static_cast<uint16_t>(dst - buffer.data());
+            yOffsets[y] = ByteSwapLE(static_cast<uint16_t>(dst - buffer.data()));
 
             auto previousCode = static_cast<RLECode*>(nullptr);
             auto currentCode = reinterpret_cast<RLECode*>(dst);

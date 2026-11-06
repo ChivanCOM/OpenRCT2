@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "../core/Endianness.h"
 #include "../core/FlagHolder.hpp"
 
 #include <memory>
@@ -67,8 +68,8 @@ namespace OpenRCT2
 #pragma pack(push, 1)
     struct G1Header
     {
-        uint32_t numEntries = 0;
-        uint32_t totalSize = 0;
+        LE<uint32_t> numEntries{};
+        LE<uint32_t> totalSize{};
     };
     static_assert(sizeof(G1Header) == 8);
 #pragma pack(pop)
@@ -82,13 +83,13 @@ namespace OpenRCT2
 
     struct StoredG1Element
     {
-        uint32_t offset;       // 0x00 note: uint32_t always!
-        int16_t width;         // 0x04
-        int16_t height;        // 0x06
-        int16_t xOffset;       // 0x08
-        int16_t yOffset;       // 0x0A
-        G1Flags flags;         // 0x0C
-        uint16_t zoomedOffset; // 0x0E
+        LE<uint32_t> offset;       // 0x00 note: uint32_t always!
+        LE<int16_t> width;         // 0x04
+        LE<int16_t> height;        // 0x06
+        LE<int16_t> xOffset;       // 0x08
+        LE<int16_t> yOffset;       // 0x0A
+        LE<G1Flags> flags;         // 0x0C
+        LE<uint16_t> zoomedOffset; // 0x0E
     };
     static_assert(sizeof(StoredG1Element) == 0x10);
 } // namespace OpenRCT2

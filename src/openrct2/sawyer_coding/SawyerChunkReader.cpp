@@ -108,7 +108,9 @@ namespace OpenRCT2::SawyerCoding
                 throw SawyerChunkException(kExceptionMessageCorruptChunkSize);
             }
 
-            ChunkHeader header{ ChunkEncoding::rle, compressedDataLength };
+            ChunkHeader header{};
+            header.encoding = ChunkEncoding::rle;
+            header.length = compressedDataLength;
             auto buffer = DecodeChunk(compressedData.get(), header);
             if (buffer.GetLength() == 0)
             {

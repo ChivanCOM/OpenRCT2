@@ -33,8 +33,8 @@ namespace OpenRCT2::CommandLine::Sprite
                 return ExitCode::fail;
             }
 
-            printf("sprites: %u\n", spriteFile->Header.numEntries);
-            printf("data size: %u\n", spriteFile->Header.totalSize);
+            printf("sprites: %u\n", spriteFile->Header.numEntries.get());
+            printf("data size: %u\n", spriteFile->Header.totalSize.get());
             return ExitCode::ok;
         }
 

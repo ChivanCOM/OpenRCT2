@@ -384,7 +384,7 @@ static void ReadAndConvertGxDat(IStream* stream, size_t count, bool is_rctc, G1E
             elements[i].yOffset = src.yOffset;
             elements[i].flags = src.flags;
 
-            if (src.flags.has(G1Flag::hasZoomSprite))
+            if (src.flags.get().has(G1Flag::hasZoomSprite))
             {
                 elements[i].zoomedOffset = static_cast<int32_t>(i - rctc_to_rct2_index(rctc - src.zoomedOffset));
             }

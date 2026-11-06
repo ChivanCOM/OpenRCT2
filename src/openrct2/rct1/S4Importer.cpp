@@ -2274,7 +2274,7 @@ namespace OpenRCT2::RCT1
             {
                 if (src.Time != 0)
                 {
-                    currentAwards.push_back(Award{ src.Time, static_cast<AwardType>(src.Type) });
+                    currentAwards.push_back(Award{ src.Time, static_cast<AwardType>(src.Type.get()) });
                 }
             }
 

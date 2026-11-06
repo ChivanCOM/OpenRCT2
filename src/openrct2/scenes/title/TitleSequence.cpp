@@ -422,9 +422,14 @@ namespace OpenRCT2::Title
         while (true)
         {
             int32_t c = 0;
-            if (stream->TryRead(&c, 1) != 1)
+            uint8_t byte = 0; // not straight into c: on big-endian that would fill its high byte
+            if (stream->TryRead(&byte, 1) != 1)
             {
                 c = EOF;
+            }
+            else
+            {
+                c = byte;
             }
             if (c == '\n' || c == '\r' || c == EOF)
             {

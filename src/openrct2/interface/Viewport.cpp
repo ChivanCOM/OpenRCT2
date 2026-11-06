@@ -9,6 +9,7 @@
 
 #include "Viewport.h"
 
+#include "../core/Endianness.h"
 #include "../Context.h"
 #include "../Diagnostic.h"
 #include "../GameState.h"
@@ -1514,6 +1515,7 @@ namespace OpenRCT2
     {
         uint16_t lineOffset;
         std::memcpy(&lineOffset, &imgData[y * sizeof(uint16_t)], sizeof(uint16_t));
+        lineOffset = ByteSwapLE(lineOffset); // RLE line offsets are stored little-endian
         const uint8_t* data8 = imgData + lineOffset;
 
         bool lastDataLine = false;

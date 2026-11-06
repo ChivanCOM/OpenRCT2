@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "../core/Endianness.h"
 #include "../core/JsonFwd.hpp"
 #include "../core/StringTypes.h"
 #include "../drawing/ImageIndexType.h"
@@ -54,7 +55,7 @@ namespace OpenRCT2
         union
         {
             uint8_t end_flag; // needed not to read past allocated buffer.
-            uint32_t flags;
+            LE<uint32_t> flags;
         };
         union
         {
@@ -62,7 +63,7 @@ namespace OpenRCT2
             struct
             {
                 char name[8];
-                uint32_t checksum;
+                LE<uint32_t> checksum;
             };
         };
 

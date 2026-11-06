@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "../core/Endianness.h"
+
 #include "../core/MemoryStream.h"
 
 #include <cstdint>
@@ -29,7 +31,7 @@ namespace OpenRCT2::SawyerCoding
     struct ChunkHeader
     {
         ChunkEncoding encoding;
-        uint32_t length;
+        LE<uint32_t> length;
     };
     static_assert(sizeof(ChunkHeader) == 5);
 #pragma pack(pop)

@@ -500,7 +500,7 @@ namespace OpenRCT2::RCT2
             {
                 if (src.Time != 0)
                 {
-                    currentAwards.push_back(Award{ src.Time, static_cast<AwardType>(src.Type) });
+                    currentAwards.push_back(Award{ src.Time, static_cast<AwardType>(src.Type.get()) });
                 }
             }
 
@@ -1189,7 +1189,10 @@ namespace OpenRCT2::RCT2
             if (String::equals(_s6.ScenarioFilename, "WW South America - Rio Carnival.SC6")
                 || String::equals(_s6.ScenarioFilename, "South America - Rio Carnival.SC6"))
             {
-                _s6.PeepSpawns[0] = { 2160, 3167, 6, 1 };
+                _s6.PeepSpawns[0].x = 2160;
+                _s6.PeepSpawns[0].y = 3167;
+                _s6.PeepSpawns[0].z = 6;
+                _s6.PeepSpawns[0].direction = 1;
                 _s6.PeepSpawns[1].x = kRCT12PeepSpawnUndefined;
             }
             // In this park, peep_spawns[0] is correct. Just clear the other.
@@ -1252,7 +1255,7 @@ namespace OpenRCT2::RCT2
             std::vector<TileElement> tileElements;
             bool nextElementInvisible = false;
             bool restOfTileInvisible = false;
-            const auto maxSize = std::min(Limits::kMaxMapSize, _s6.MapSize);
+            const auto maxSize = std::min(Limits::kMaxMapSize, _s6.MapSize.get());
             for (TileCoordsXY coords = { 0, 0 }; coords.y < kMaximumMapSizeTechnical; coords.y++)
             {
                 for (coords.x = 0; coords.x < kMaximumMapSizeTechnical; coords.x++)
@@ -1716,7 +1719,7 @@ namespace OpenRCT2::RCT2
             dst->currentRide = RCT12RideIdToOpenRCT2RideId(src->CurrentRide);
             dst->currentRideStation = StationIndex::FromUnderlying(src->CurrentRideStation);
             dst->currentTrain = src->CurrentTrain;
-            dst->timeToSitdown = src->TimeToSitdown;
+            dst->setSaveUnion16(src->TimeToSitdown);
             dst->specialSprite = src->SpecialSprite;
             dst->animationType = static_cast<PeepAnimationType>(src->AnimationType);
             dst->nextAnimationType = static_cast<PeepAnimationType>(src->NextAnimationType);

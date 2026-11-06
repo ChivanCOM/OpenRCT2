@@ -48,13 +48,13 @@ namespace OpenRCT2
 #pragma pack(push, 1)
         struct Header
         {
-            uint32_t magic{};
-            uint32_t targetVersion{};
-            uint32_t minVersion{};
-            uint32_t numChunks{};
-            uint64_t uncompressedSize{};
-            CompressionType compression{};
-            uint64_t compressedSize{};
+            LE<uint32_t> magic{};
+            LE<uint32_t> targetVersion{};
+            LE<uint32_t> minVersion{};
+            LE<uint32_t> numChunks{};
+            LE<uint64_t> uncompressedSize{};
+            LE<CompressionType> compression{};
+            LE<uint64_t> compressedSize{};
             std::array<uint8_t, 8> fnv1a{};
             uint8_t padding[20]{};
         };
@@ -62,9 +62,9 @@ namespace OpenRCT2
 
         struct ChunkEntry
         {
-            uint32_t id{};
-            uint64_t offset{};
-            uint64_t length{};
+            LE<uint32_t> id{};
+            LE<uint64_t> offset{};
+            LE<uint64_t> length{};
         };
 #pragma pack(pop)
 
@@ -582,12 +582,14 @@ namespace OpenRCT2
                     {
                         int64_t raw{};
                         read(&raw, sizeof(raw));
+                        raw = ByteSwapLE(raw);
                         return static_cast<T>(raw);
                     }
                     else
                     {
                         uint64_t raw{};
                         read(&raw, sizeof(raw));
+                        raw = ByteSwapLE(raw);
                         return static_cast<T>(raw);
                     }
                 }
@@ -597,6 +599,7 @@ namespace OpenRCT2
                     {
                         int32_t raw{};
                         read(&raw, sizeof(raw));
+                        raw = ByteSwapLE(raw);
                         if (raw < std::numeric_limits<T>::min() || raw > std::numeric_limits<T>::max())
                         {
                             throw std::runtime_error("Value is incompatible with internal type.");
@@ -607,6 +610,7 @@ namespace OpenRCT2
                     {
                         uint32_t raw{};
                         read(&raw, sizeof(raw));
+                        raw = ByteSwapLE(raw);
                         if (raw > std::numeric_limits<T>::max())
                         {
                             throw std::runtime_error("Value is incompatible with internal type.");
@@ -623,12 +627,12 @@ namespace OpenRCT2
                 {
                     if constexpr (std::is_signed<T>())
                     {
-                        auto raw = static_cast<int64_t>(value);
+                        auto raw = ByteSwapLE(static_cast<int64_t>(value));
                         write(&raw, sizeof(raw));
                     }
                     else
                     {
-                        auto raw = static_cast<uint64_t>(value);
+                        auto raw = ByteSwapLE(static_cast<uint64_t>(value));
                         write(&raw, sizeof(raw));
                     }
                 }
@@ -636,12 +640,12 @@ namespace OpenRCT2
                 {
                     if constexpr (std::is_signed<T>())
                     {
-                        auto raw = static_cast<int32_t>(value);
+                        auto raw = ByteSwapLE(static_cast<int32_t>(value));
                         write(&raw, sizeof(raw));
                     }
                     else
                     {
-                        auto raw = static_cast<uint32_t>(value);
+                        auto raw = ByteSwapLE(static_cast<uint32_t>(value));
                         write(&raw, sizeof(raw));
                     }
                 }

@@ -206,7 +206,7 @@ namespace OpenRCT2
      */
     void ObjectCreateIdentifierName(char* string_buffer, size_t size, const RCTObjectEntry* object)
     {
-        snprintf(string_buffer, size, "%.8s/%4X%4X", object->name, object->flags, object->checksum);
+        snprintf(string_buffer, size, "%.8s/%4X%4X", object->name, object->flags.get(), object->checksum.get());
     }
 
     void ObjectGetTypeEntryIndex(size_t index, ObjectType* outObjectType, ObjectEntryIndex* outEntryIndex)

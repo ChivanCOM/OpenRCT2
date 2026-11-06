@@ -11,6 +11,7 @@
 
 // Structures shared between both RCT1 and RCT2.
 
+#include "../core/Endianness.h"
 #include "../core/FlagHolder.hpp"
 #include "../core/Money.hpp"
 #include "../drawing/Colour.h"
@@ -507,7 +508,7 @@ struct RCT12xy8
         {
             uint8_t x, y;
         };
-        uint16_t xy;
+        LE<uint16_t> xy;
     };
 
     bool IsNull() const
@@ -524,8 +525,8 @@ static_assert(sizeof(RCT12xy8) == 2);
 
 struct RCT12Award
 {
-    uint16_t Time;
-    uint16_t Type;
+    LE<uint16_t> Time;
+    LE<uint16_t> Type;
 };
 static_assert(sizeof(RCT12Award) == 4);
 
@@ -537,9 +538,9 @@ struct RCT12NewsItem
 {
     uint8_t Type;
     uint8_t Flags;
-    uint32_t Assoc;
-    uint16_t Ticks;
-    uint16_t MonthYear;
+    LE<uint32_t> Assoc;
+    LE<uint16_t> Ticks;
+    LE<uint16_t> MonthYear;
     uint8_t Day;
     uint8_t Pad0B;
     char Text[256];
@@ -554,8 +555,8 @@ static_assert(sizeof(RCT12xyzd8) == 4);
 
 struct RCT12PeepSpawn
 {
-    uint16_t x;
-    uint16_t y;
+    LE<uint16_t> x;
+    LE<uint16_t> y;
     uint8_t z;
     uint8_t direction;
 };
@@ -782,7 +783,7 @@ private:
             uint8_t Sequence; // 5.
             uint8_t Colour;   // 6
         };
-        uint16_t MazeEntry; // 5
+        LE<uint16_t> MazeEntry; // 5
     };
     uint8_t RideIndex; // 7
 public:
@@ -826,7 +827,7 @@ static_assert(sizeof(RCT12SmallSceneryElement) == 8);
 struct RCT12LargeSceneryElement : RCT12TileElementBase
 {
 private:
-    uint16_t EntryIndex; // 4
+    LE<uint16_t> EntryIndex; // 4
     uint8_t Colour[2];   // 6
 public:
     uint32_t GetEntryIndex() const;
@@ -1013,22 +1014,22 @@ struct RCT12EntityBase
 {
     RCT12EntityIdentifier EntityIdentifier;         // 0x00
     uint8_t Type;                                   // 0x01
-    uint16_t NextInQuadrant;                        // 0x02
-    uint16_t Next;                                  // 0x04
-    uint16_t Previous;                              // 0x06
+    LE<uint16_t> NextInQuadrant;                        // 0x02
+    LE<uint16_t> Next;                                  // 0x04
+    LE<uint16_t> Previous;                              // 0x06
     RCT12EntityLinkListOffset LinkedListTypeOffset; // 0x08
     uint8_t SpriteHeightNegative;                   // 0x09
-    uint16_t EntityIndex;                           // 0x0A
-    uint16_t Flags;                                 // 0x0C
-    int16_t x;                                      // 0x0E
-    int16_t y;                                      // 0x10
-    int16_t z;                                      // 0x12
+    LE<uint16_t> EntityIndex;                           // 0x0A
+    LE<uint16_t> Flags;                                 // 0x0C
+    LE<int16_t> x;                                      // 0x0E
+    LE<int16_t> y;                                      // 0x10
+    LE<int16_t> z;                                      // 0x12
     uint8_t SpriteWidth;                            // 0x14
     uint8_t SpriteHeightPositive;                   // 0x15
-    int16_t SpriteLeft;                             // 0x16
-    int16_t SpriteTop;                              // 0x18
-    int16_t SpriteRight;                            // 0x1A
-    int16_t SpriteBottom;                           // 0x1C
+    LE<int16_t> SpriteLeft;                             // 0x16
+    LE<int16_t> SpriteTop;                              // 0x18
+    LE<int16_t> SpriteRight;                            // 0x1A
+    LE<int16_t> SpriteBottom;                           // 0x1C
     uint8_t EntityDirection;                        // 0x1E
 };
 static_assert(sizeof(RCT12EntityBase) == 0x1F);
@@ -1036,7 +1037,7 @@ static_assert(sizeof(RCT12EntityBase) == 0x1F);
 struct RCT12EntityBalloon : RCT12EntityBase
 {
     uint8_t Pad1F[0x24 - 0x1F];
-    uint16_t Popped;    // 0x24
+    LE<uint16_t> Popped;    // 0x24
     uint8_t TimeToMove; // 0x26
     uint8_t Frame;      // 0x27
     uint8_t Pad28[4];
@@ -1047,10 +1048,10 @@ static_assert(sizeof(RCT12EntityBalloon) == 0x2D);
 struct RCT12EntityDuck : RCT12EntityBase
 {
     uint8_t Pad1F[0x26 - 0x1F];
-    uint16_t Frame; // 0x26
+    LE<uint16_t> Frame; // 0x26
     uint8_t Pad28[0x30 - 0x28];
-    int16_t TargetX; // 0x30
-    int16_t TargetY; // 0x32
+    LE<int16_t> TargetX; // 0x30
+    LE<int16_t> TargetY; // 0x32
     uint8_t Pad34[0x14];
     uint8_t State; // 0x48
 };
@@ -1059,14 +1060,14 @@ static_assert(sizeof(RCT12EntityDuck) == 0x49);
 struct RCT12EntityLitter : RCT12EntityBase
 {
     uint8_t Pad1F[0x24 - 0x1F];
-    uint32_t CreationTick; // 0x24
+    LE<uint32_t> CreationTick; // 0x24
 };
 static_assert(sizeof(RCT12EntityLitter) == 0x28);
 
 struct RCT12EntityParticle : RCT12EntityBase
 {
     uint8_t Pad1F[0x26 - 0x1F];
-    uint16_t Frame; // 0x26
+    LE<uint16_t> Frame; // 0x26
 };
 static_assert(sizeof(RCT12EntityParticle) == 0x28);
 
@@ -1077,56 +1078,56 @@ struct RCT12EntityJumpingFountain : RCT12EntityBase
     uint8_t Frame;         // 0x27
     uint8_t Pad28[0x2F - 0x28];
     OpenRCT2::FountainFlags fountainFlags{}; // 0x2F
-    int16_t TargetX;                         // 0x30
-    int16_t TargetY;                         // 0x32
+    LE<int16_t> TargetX;                         // 0x30
+    LE<int16_t> TargetY;                         // 0x32
     uint8_t Pad34[0x46 - 0x34];
-    uint16_t Iteration; // 0x46
+    LE<uint16_t> Iteration; // 0x46
 };
 static_assert(sizeof(RCT12EntityJumpingFountain) == 0x48);
 
 struct RCT12EntityMoneyEffect : RCT12EntityBase
 {
     uint8_t Pad1F[0x24 - 0x1F];
-    uint16_t MoveDelay;   // 0x24
+    LE<uint16_t> MoveDelay;   // 0x24
     uint8_t NumMovements; // 0x26
     uint8_t Vertical;
-    money32 Value; // 0x28
+    LE<money32> Value; // 0x28
     uint8_t Pad2C[0x44 - 0x2C];
-    int16_t OffsetX; // 0x44
-    uint16_t Wiggle; // 0x46
+    LE<int16_t> OffsetX; // 0x44
+    LE<uint16_t> Wiggle; // 0x46
 };
 static_assert(sizeof(RCT12EntityMoneyEffect) == 0x48);
 
 struct RCT12EntityCrashedVehicleParticle : RCT12EntityBase
 {
     uint8_t Pad1F[0x24 - 0x1F];
-    uint16_t TimeToLive; // 0x24
-    uint16_t Frame;      // 0x26
+    LE<uint16_t> TimeToLive; // 0x24
+    LE<uint16_t> Frame;      // 0x26
     uint8_t Pad28[0x2C - 0x28];
     uint8_t Colour[2];          // 0x2C
-    uint16_t CrashedEntityBase; // 0x2E
-    int16_t VelocityX;          // 0x30
-    int16_t VelocityY;          // 0x32
-    int16_t VelocityZ;          // 0x34
+    LE<uint16_t> CrashedEntityBase; // 0x2E
+    LE<int16_t> VelocityX;          // 0x30
+    LE<int16_t> VelocityY;          // 0x32
+    LE<int16_t> VelocityZ;          // 0x34
     uint8_t Pad36[0x38 - 0x36];
-    int32_t AccelerationX; // 0x38
-    int32_t AccelerationY; // 0x3C
-    int32_t AccelerationZ; // 0x40
+    LE<int32_t> AccelerationX; // 0x38
+    LE<int32_t> AccelerationY; // 0x3C
+    LE<int32_t> AccelerationZ; // 0x40
 };
 static_assert(sizeof(RCT12EntityCrashedVehicleParticle) == 0x44);
 
 struct RCT12EntityCrashSplash : RCT12EntityBase
 {
     uint8_t Pad1F[0x26 - 0x1F];
-    uint16_t Frame; // 0x26
+    LE<uint16_t> Frame; // 0x26
 };
 static_assert(sizeof(RCT12EntityCrashSplash) == 0x28);
 
 struct RCT12EntitySteamParticle : RCT12EntityBase
 {
     uint8_t Pad1F[0x24 - 0x1F];
-    uint16_t TimeToMove; // 0x24
-    uint16_t Frame;      // 0x26
+    LE<uint16_t> TimeToMove; // 0x24
+    LE<uint16_t> Frame;      // 0x26
 };
 static_assert(sizeof(RCT12EntitySteamParticle) == 0x28);
 
@@ -1143,9 +1144,9 @@ struct RCT12RideMeasurement
 {
     uint8_t RideIndex;                                                   // 0x0000
     uint8_t Flags;                                                       // 0x0001
-    uint32_t LastUseTick;                                                // 0x0002
-    uint16_t NumItems;                                                   // 0x0006
-    uint16_t CurrentItem;                                                // 0x0008
+    LE<uint32_t> LastUseTick;                                                // 0x0002
+    LE<uint16_t> NumItems;                                                   // 0x0006
+    LE<uint16_t> CurrentItem;                                                // 0x0008
     uint8_t VehicleIndex;                                                // 0x000A
     uint8_t CurrentStation;                                              // 0x000B
     int8_t Vertical[OpenRCT2::RCT12::Limits::kRideMeasurementMaxItems];  // 0x000C
@@ -1175,8 +1176,8 @@ struct RCT12MapAnimation
 {
     uint8_t BaseZ;
     uint8_t Type;
-    uint16_t x;
-    uint16_t y;
+    LE<uint16_t> x;
+    LE<uint16_t> y;
 };
 static_assert(sizeof(RCT12MapAnimation) == 6);
 
@@ -1189,7 +1190,7 @@ struct RCT12ResearchItem
     // Bit 16 (0: scenery entry, 1: ride entry)
     union
     {
-        uint32_t RawValue;
+        LE<uint32_t> RawValue;
         struct
         {
             RCT12ObjectEntryIndex EntryIndex;

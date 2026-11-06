@@ -7,6 +7,7 @@
  * OpenRCT2 is licensed under the GNU General Public License version 3.
  *****************************************************************************/
 
+#include "../core/Endianness.h"
 #include "Drawing.Sprite.h"
 #include "RenderTarget.h"
 
@@ -34,6 +35,7 @@ static void FASTCALL DrawRLESpriteMagnify(RenderTarget& rt, const DrawSpriteArgs
         const int32_t rowNum = zoom.ApplyTo(srcY + y);
         uint16_t lineOffset;
         std::memcpy(&lineOffset, &imgData[rowNum * sizeof(uint16_t)], sizeof(uint16_t));
+        lineOffset = ByteSwapLE(lineOffset);
         const uint8_t* data8 = imgData + lineOffset;
 
         bool lastDataForLine = false;

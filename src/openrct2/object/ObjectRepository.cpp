@@ -592,9 +592,9 @@ namespace OpenRCT2
         std::string GetFileNameForNewObject(const RCTObjectEntry& entry)
         {
             utf8 flagsBuffer[10];
-            std::snprintf(flagsBuffer, 9, "%08X", entry.flags);
+            std::snprintf(flagsBuffer, 9, "%08X", entry.flags.get());
             utf8 checksumBuffer[10];
-            std::snprintf(checksumBuffer, 9, "%08X", entry.checksum);
+            std::snprintf(checksumBuffer, 9, "%08X", entry.checksum.get());
 
             // Needs to be converted to string first because convertToUtf8() does not properly handle the string view length.
             auto cp1252name = std::string(entry.GetName());

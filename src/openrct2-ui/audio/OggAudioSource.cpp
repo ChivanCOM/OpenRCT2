@@ -76,7 +76,7 @@ namespace OpenRCT2::Audio
                 return false;
             }
 
-            _format.format = AUDIO_S16LSB;
+            _format.format = AUDIO_S16SYS; // ov_read below decodes to native byte order
             _format.channels = vi->channels;
             _format.freq = vi->rate;
             _totalSamples = ov_pcm_total(&*_file, -1);

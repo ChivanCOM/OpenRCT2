@@ -16,6 +16,7 @@
 #include "StringIdType.h"
 
 #include <array>
+#include <bit>
 #include <cstring>
 
 namespace OpenRCT2
@@ -119,7 +120,11 @@ namespace OpenRCT2
             {
                 convertedValue = reinterpret_cast<uint64_t>(value);
             }
-            std::memcpy(CurrentBuf, &convertedValue, sizeof(TSpecified));
+            // The low-order sizeof(TSpecified) bytes: at the start on little-endian, at the end on big-endian
+            const auto* src = reinterpret_cast<const uint8_t*>(&convertedValue);
+            if constexpr (std::endian::native == std::endian::big)
+                src += sizeof(uint64_t) - sizeof(TSpecified);
+            std::memcpy(CurrentBuf, src, sizeof(TSpecified));
             Increment(sizeof(TSpecified));
             return *this;
         }

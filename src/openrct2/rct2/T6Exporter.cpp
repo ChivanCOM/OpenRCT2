@@ -183,7 +183,9 @@ namespace OpenRCT2::RCT2
         for (const auto& trackElement : _trackDesign.trackElements)
         {
             auto flags = RCT12::convertToTD46Flags(trackElement, _trackDesign.version);
-            TD7TrackElement element = { trackElement.type, flags };
+            TD7TrackElement element{};
+            element.type = trackElement.type;
+            element.flags = flags;
             tempStream.WriteValue<TD7TrackElement>(element);
         }
 
