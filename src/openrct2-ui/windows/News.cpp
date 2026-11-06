@@ -178,7 +178,7 @@ namespace OpenRCT2::Ui::Windows
                         .right = static_cast<int16_t>(baseCheckBox.right + 5),
                         .top = y,
                         .bottom = static_cast<int16_t>(y + kListRowHeight),
-                        .text = def.group,
+                        .content = def.group,
                     };
 
                     groupWidgetsToInsert.emplace_back(groupWidget);
@@ -194,7 +194,7 @@ namespace OpenRCT2::Ui::Windows
                     .right = baseCheckBox.right,
                     .top = y,
                     .bottom = static_cast<int16_t>(y + kListRowHeight + 3),
-                    .text = def.caption,
+                    .content = def.caption,
                 };
 
                 checkboxWidgetsToInsert.emplace_back(checkboxWidget);

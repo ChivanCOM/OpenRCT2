@@ -197,7 +197,13 @@ namespace OpenRCT2
         union
         {
             RideId rideId;
-            ShopItem shopItem;
+            struct // the low byte of item (saved and loaded as item) on every host
+            {
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+                uint8_t shopItemPadding;
+#endif
+                ShopItem shopItem;
+            };
             uint16_t item;
         };
         uint8_t freshness;     // larger is less fresh
@@ -337,7 +343,13 @@ namespace OpenRCT2
         union
         {
             RideId voucherRideId;
-            ShopItemIndex voucherShopItem;
+            struct // the low byte of voucherRideId (saved and loaded as voucherRideId) on every host
+            {
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+                uint8_t voucherShopItemPadding;
+#endif
+                ShopItemIndex voucherShopItem;
+            };
         };
         uint8_t surroundingsThoughtTimeout;
         uint8_t angriness;

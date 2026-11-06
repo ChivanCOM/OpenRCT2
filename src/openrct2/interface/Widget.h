@@ -91,7 +91,14 @@ namespace OpenRCT2
         {
             uint32_t content;
             ImageId image{};
-            StringId text;
+            // text is read back from values stored in content: keep it in the low 16 bits on every host
+            struct
+            {
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+                uint16_t textPadding;
+#endif
+                StringId text;
+            };
             const utf8* string;
         };
         StringId tooltip{ kStringIdNone };

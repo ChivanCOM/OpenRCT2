@@ -57,7 +57,13 @@ struct MarketingCampaign
     union
     {
         ::RideId rideId{};
-        ShopItemIndex shopItemType;
+        struct // the low byte of rideId (saved and loaded as rideId) on every host
+        {
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+            uint8_t shopItemTypePadding;
+#endif
+            ShopItemIndex shopItemType;
+        };
     };
 };
 
