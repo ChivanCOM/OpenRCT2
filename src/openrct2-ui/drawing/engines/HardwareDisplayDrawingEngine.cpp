@@ -128,9 +128,17 @@ public:
 
         if (_direct8)
         {
+            // A new size frees the old window surface: take our image back into our own memory first
+            if (_bitsExternal)
+                ConfigureBits(_width, _height, _width);
             _windowSurface = SDL_GetWindowSurface(_window);
             _direct8Rects.clear();
             X8DrawingEngine::Resize(width, height);
+            // Draw straight into the window surface: showing a frame is then only the driver's
+            // copy of the redrawn blocks to the screen
+            if (_windowSurface != nullptr && _windowSurface->w >= static_cast<int>(width)
+                && _windowSurface->h >= static_cast<int>(height))
+                UseExternalBits(static_cast<PaletteIndex*>(_windowSurface->pixels), _windowSurface->pitch);
             // Everything is new: copy the whole screen on the next frame
             _direct8Rects.push_back({ 0, 0, static_cast<int>(width), static_cast<int>(height) });
             return;
@@ -348,7 +356,7 @@ private:
             r.h = std::min(r.y + r.h, h) - y0;
             r.x = x0;
             r.y = y0;
-            if (r.w <= 0 || r.h <= 0)
+            if (r.w <= 0 || r.h <= 0 || _bits == _windowSurface->pixels)
                 continue;
             for (int32_t y = r.y; y < r.y + r.h; y++)
             {

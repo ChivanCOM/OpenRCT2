@@ -134,7 +134,8 @@ X8DrawingEngine::X8DrawingEngine([[maybe_unused]] IUiContext& uiContext)
 X8DrawingEngine::~X8DrawingEngine()
 {
     delete _drawingContext;
-    delete[] _bits;
+    if (!_bitsExternal)
+        delete[] _bits;
 }
 
 void X8DrawingEngine::Initialise()
@@ -279,6 +280,24 @@ RenderTarget* X8DrawingEngine::getRT()
     return &_mainRT;
 }
 
+void X8DrawingEngine::UseExternalBits(PaletteIndex* bits, uint32_t pitch)
+{
+    for (uint32_t y = 0; y < _height; y++)
+        std::copy_n(_bits + static_cast<size_t>(y) * _pitch, _width, bits + static_cast<size_t>(y) * pitch);
+    if (!_bitsExternal)
+        delete[] _bits;
+    _bits = bits;
+    _bitsExternal = true;
+    _bitsSize = static_cast<size_t>(pitch) * _height;
+    _pitch = pitch;
+    _mainRT.bits = _bits;
+    _mainRT.pitch = _pitch - _width;
+    if (LightFx::IsAvailable())
+    {
+        LightFx::UpdateBuffers(_mainRT);
+    }
+}
+
 void X8DrawingEngine::ConfigureBits(uint32_t width, uint32_t height, uint32_t pitch)
 {
     size_t newBitsSize = pitch * height;
@@ -311,10 +330,12 @@ void X8DrawingEngine::ConfigureBits(uint32_t width, uint32_t height, uint32_t pi
                 dst += pitch;
             }
         }
-        delete[] _bits;
+        if (!_bitsExternal)
+            delete[] _bits;
     }
 
     _bits = newBits;
+    _bitsExternal = false;
     _bitsSize = newBitsSize;
     _width = width;
     _height = height;

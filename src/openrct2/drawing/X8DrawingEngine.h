@@ -61,6 +61,7 @@ namespace OpenRCT2
             uint32_t _pitch = 0;
             size_t _bitsSize = 0;
             PaletteIndex* _bits = nullptr;
+            bool _bitsExternal = false; // _bits belongs to someone else (UseExternalBits)
 
             RenderTarget _mainRT = {};
 
@@ -109,6 +110,9 @@ namespace OpenRCT2
 
         protected:
             void ConfigureBits(uint32_t width, uint32_t height, uint32_t pitch);
+            // Draw straight into memory owned by the caller, such as an 8-bit window surface:
+            // displaying the image then needs no copy. Valid until the next ConfigureBits.
+            void UseExternalBits(PaletteIndex* bits, uint32_t pitch);
             virtual void OnDrawDirtyBlock(int32_t left, int32_t top, int32_t right, int32_t bottom);
 
         private:
