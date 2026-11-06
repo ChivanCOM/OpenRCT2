@@ -12,7 +12,9 @@
 #include <SDL_hints.h>
 #include <SDL_render.h>
 #include <SDL_version.h>
+#include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <memory>
 #include <openrct2/Diagnostic.h>
 #include <openrct2/Game.h>
@@ -51,6 +53,13 @@ private:
 
     bool smoothNN = false;
 
+    // Direct 8-bit output: when the window surface is 8-bit paletted (a plain framebuffer such as
+    // the iMac G3's console), our 8-bit image goes straight into it, block by redrawn block,
+    // with no SDL renderer, colour conversion or full-screen copies.
+    bool _direct8 = false;
+    SDL_Surface* _windowSurface = nullptr;
+    std::vector<SDL_Rect> _direct8Rects;
+
 public:
     explicit HardwareDisplayDrawingEngine(IUiContext& uiContext)
         : X8DrawingEngine(uiContext)
@@ -75,11 +84,26 @@ public:
 
     void Initialise() override
     {
+        // Decide by the window's pixel format: SDL_GetWindowSurface would bind the window to its
+        // surface and stop SDL_CreateRenderer from working on it.
+        if (SDL_GetWindowPixelFormat(_window) == SDL_PIXELFORMAT_INDEX8)
+            _windowSurface = SDL_GetWindowSurface(_window);
+        if (_windowSurface != nullptr && _windowSurface->format->palette != nullptr)
+        {
+            _direct8 = true;
+            LOG_VERBOSE("HWDisplayDrawingEngine: direct 8-bit output to the window surface");
+            return;
+        }
         _sdlRenderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED | (_useVsync ? SDL_RENDERER_PRESENTVSYNC : 0));
+        // Plain framebuffer video drivers (no GPU) only have the software renderer
+        if (_sdlRenderer == nullptr)
+            _sdlRenderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_SOFTWARE);
     }
 
     void SetVSync(bool vsync) override
     {
+        if (_direct8)
+            return;
         if (_useVsync != vsync)
         {
             _useVsync = vsync;
@@ -99,6 +123,16 @@ public:
     {
         if (width == 0 || height == 0)
         {
+            return;
+        }
+
+        if (_direct8)
+        {
+            _windowSurface = SDL_GetWindowSurface(_window);
+            _direct8Rects.clear();
+            X8DrawingEngine::Resize(width, height);
+            // Everything is new: copy the whole screen on the next frame
+            _direct8Rects.push_back({ 0, 0, static_cast<int>(width), static_cast<int>(height) });
             return;
         }
 
@@ -181,6 +215,17 @@ public:
 
     void SetPalette(const GamePalette& palette) override
     {
+        if (_direct8)
+        {
+            if (_windowSurface != nullptr)
+            {
+                SDL_Color colours[256];
+                for (int32_t i = 0; i < 256; i++)
+                    colours[i] = { palette[i].red, palette[i].green, palette[i].blue, 255 };
+                SDL_SetPaletteColors(_windowSurface->format->palette, colours, 0, 256);
+            }
+            return;
+        }
         if (_screenTextureFormat != nullptr)
         {
             for (int32_t i = 0; i < 256; i++)
@@ -200,6 +245,15 @@ public:
         }
     }
 
+    // Viewport scrolling moves pixels inside the image instead of redrawing them: in direct 8-bit
+    // mode the moved area must reach the screen too.
+    void CopyRect(int32_t x, int32_t y, int32_t width, int32_t height, int32_t dx, int32_t dy) override
+    {
+        X8DrawingEngine::CopyRect(x, y, width, height, dx, dy);
+        if (_direct8 && (dx != 0 || dy != 0))
+            _direct8Rects.push_back({ x, y, width, height });
+    }
+
     void BeginDraw() override
     {
         X8DrawingEngine::BeginDraw();
@@ -215,6 +269,8 @@ public:
 protected:
     void OnDrawDirtyBlock(int32_t left, int32_t top, int32_t right, int32_t bottom) override
     {
+        if (_direct8)
+            _direct8Rects.push_back({ left, top, right - left, bottom - top });
         if (gShowDirtyVisuals)
         {
             const auto columns = ((right - left) + (_invalidationGrid.getBlockWidth() - 1)) / _invalidationGrid.getBlockWidth();
@@ -235,6 +291,11 @@ protected:
 private:
     void Display()
     {
+        if (_direct8)
+        {
+            DisplayDirect8();
+            return;
+        }
         auto* viewport = WindowGetViewport(WindowGetMain());
 
         if (Config::Get().general.enableLightFx && viewport != nullptr)
@@ -274,48 +335,65 @@ private:
         SDL_RenderPresent(_sdlRenderer);
     }
 
+    void DisplayDirect8()
+    {
+        if (_windowSurface == nullptr)
+            return;
+        const int32_t w = std::min<int32_t>(_windowSurface->w, static_cast<int32_t>(_width));
+        const int32_t h = std::min<int32_t>(_windowSurface->h, static_cast<int32_t>(_height));
+        for (auto& r : _direct8Rects)
+        {
+            const int32_t x0 = std::max(r.x, 0), y0 = std::max(r.y, 0);
+            r.w = std::min(r.x + r.w, w) - x0;
+            r.h = std::min(r.y + r.h, h) - y0;
+            r.x = x0;
+            r.y = y0;
+            if (r.w <= 0 || r.h <= 0)
+                continue;
+            for (int32_t y = r.y; y < r.y + r.h; y++)
+            {
+                std::memcpy(
+                    static_cast<uint8_t*>(_windowSurface->pixels) + y * _windowSurface->pitch + r.x,
+                    _bits + static_cast<size_t>(y) * _pitch + r.x, r.w);
+            }
+        }
+        // Also with no rectangles: the driver picks up palette changes on every update
+        SDL_UpdateWindowSurfaceRects(_window, _direct8Rects.data(), static_cast<int>(_direct8Rects.size()));
+        _direct8Rects.clear();
+    }
+
     void CopyBitsToTexture(SDL_Texture* texture, PaletteIndex* src, int32_t width, int32_t height, const uint32_t* palette)
     {
+        // The palette holds native pixel values from SDL_MapRGB; store them at the texture's
+        // pixel size (the old 16/8-bit paths took the first byte of a uint32, which is the wrong
+        // byte on big-endian, and never matched a 16-bit pitch).
         void* pixels;
         int32_t pitch;
+        uint32_t format;
+        if (SDL_QueryTexture(texture, &format, nullptr, nullptr, nullptr) != 0)
+            return;
+        const int32_t bytesPerPixel = SDL_BYTESPERPIXEL(format);
         if (SDL_LockTexture(texture, nullptr, &pixels, &pitch) == 0)
         {
-            int32_t padding = pitch - (width * 4);
-            if (pitch == width * 4)
+            for (int32_t y = 0; y < height; y++)
             {
-                uint32_t* dst = static_cast<uint32_t*>(pixels);
-                for (int32_t i = width * height; i > 0; i--)
+                auto* row = static_cast<uint8_t*>(pixels) + y * pitch;
+                if (bytesPerPixel == 4)
                 {
-                    *dst++ = palette[EnumValue(*src++)];
+                    auto* dst = reinterpret_cast<uint32_t*>(row);
+                    for (int32_t x = 0; x < width; x++)
+                        dst[x] = palette[EnumValue(*src++)];
                 }
-            }
-            else
-            {
-                if (pitch == (width * 2) + padding)
+                else if (bytesPerPixel == 2)
                 {
-                    uint16_t* dst = static_cast<uint16_t*>(pixels);
-                    for (int32_t y = height; y > 0; y--)
-                    {
-                        for (int32_t x = width; x > 0; x--)
-                        {
-                            const uint8_t lower = *reinterpret_cast<const uint8_t*>(&palette[EnumValue(*src++)]);
-                            const uint8_t upper = *reinterpret_cast<const uint8_t*>(&palette[EnumValue(*src++)]);
-                            *dst++ = (lower << 8) | upper;
-                        }
-                        dst = reinterpret_cast<uint16_t*>(reinterpret_cast<uint8_t*>(dst) + padding);
-                    }
+                    auto* dst = reinterpret_cast<uint16_t*>(row);
+                    for (int32_t x = 0; x < width; x++)
+                        dst[x] = static_cast<uint16_t>(palette[EnumValue(*src++)]);
                 }
-                else if (pitch == width + padding)
+                else
                 {
-                    uint8_t* dst = static_cast<uint8_t*>(pixels);
-                    for (int32_t y = height; y > 0; y--)
-                    {
-                        for (int32_t x = width; x > 0; x--)
-                        {
-                            *dst++ = *reinterpret_cast<const uint8_t*>(&palette[EnumValue(*src++)]);
-                        }
-                        dst += padding;
-                    }
+                    for (int32_t x = 0; x < width; x++)
+                        row[x] = static_cast<uint8_t>(palette[EnumValue(*src++)]);
                 }
             }
             SDL_UnlockTexture(texture);
