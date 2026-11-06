@@ -131,6 +131,39 @@ namespace OpenRCT2
         _tileIndex = TilePointerIndex<TileElement>(
             kMaximumMapSizeTechnical, gameState.tileElements.data(), gameState.tileElements.size());
         _tileElementsInUse = gameState.tileElements.size();
+        MapUpdateHighestZ();
+    }
+
+    // Element heights only rise through MapRaiseHighestElementZ between full scans (game actions
+    // use setClearanceZ); the scan also catches direct writes and lets the value fall again.
+    // Entities count over the last two scan periods, so a balloon that just vanished still does.
+    static int32_t _highestElementZ = kMaximumLandHeight * kCoordsZStep;
+    static int32_t _highestEntityZ = 0;
+    static int32_t _highestEntityZPrevious = 0;
+
+    int32_t MapGetHighestDrawnZ()
+    {
+        return std::max({ _highestElementZ, _highestEntityZ, _highestEntityZPrevious });
+    }
+
+    void MapRaiseHighestElementZ(int32_t z)
+    {
+        _highestElementZ = std::max(_highestElementZ, z);
+    }
+
+    void MapRaiseHighestEntityZ(int32_t z)
+    {
+        _highestEntityZ = std::max(_highestEntityZ, z);
+    }
+
+    void MapUpdateHighestZ()
+    {
+        int32_t highest = 0;
+        for (const auto& element : getGameState().tileElements)
+            highest = std::max(highest, static_cast<int32_t>(element.clearanceHeight));
+        _highestElementZ = highest * kCoordsZStep;
+        _highestEntityZPrevious = _highestEntityZ;
+        _highestEntityZ = 0;
     }
 
     static TileElement GetDefaultSurfaceElement(Drawing::Colour colour = Drawing::Colour::black)

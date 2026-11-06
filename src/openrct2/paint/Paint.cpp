@@ -18,6 +18,7 @@
 #include "../drawing/Drawing.h"
 #include "../drawing/Font.h"
 #include "../drawing/Line.h"
+#include "../world/Map.h"
 #include "../interface/Viewport.h"
 #include "../localisation/Currency.h"
 #include "../localisation/Formatting.h"
@@ -283,7 +284,12 @@ void PaintSessionGenerateRotate(PaintSession& session)
     }
     mapTile = mapTile.toTileStart();
 
-    uint16_t numVerticalTiles = (session.rt.WorldHeight() + 2128) >> 5;
+    // Tile rows below the view are visited because tall elements standing there can reach into
+    // it. The original margin of 2128 is the highest possible point (255 height units of 8) plus
+    // 88 for sprites overhanging their element; use the highest point actually on the map.
+    static const bool fullMargin = std::getenv("G3_FULL_MARGIN") != nullptr; // A/B comparison
+    const int32_t heightMargin = fullMargin ? 2128 : std::min(2128, MapGetHighestDrawnZ() + 88);
+    uint16_t numVerticalTiles = (session.rt.WorldHeight() + heightMargin) >> 5;
 
     // Adjacent tiles to also check due to overlapping of sprites
     constexpr CoordsXY adjacentTiles[] = {

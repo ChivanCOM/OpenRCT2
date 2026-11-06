@@ -37,6 +37,27 @@ namespace OpenRCT2::Drawing
 
         void invalidate(int32_t left, int32_t top, int32_t right, int32_t bottom) noexcept;
 
+        // When at least minFill of the blocks inside the bounding box of all dirty blocks are dirty,
+        // mark the whole box dirty: one large region is painted in one viewport pass, while several
+        // smaller regions each repeat the work for tall objects reaching into them from below.
+        void coalesce(float minFill) noexcept
+        {
+            if (_columnCount == 0 || _rowCount == 0 || _lowestRow > _highestRow || _lowestColumn > _highestColumn)
+                return;
+            const uint32_t r0 = std::min(_lowestRow, _rowCount - 1), r1 = std::min(_highestRow, _rowCount - 1);
+            const uint32_t c0 = std::min(_lowestColumn, _columnCount - 1), c1 = std::min(_highestColumn, _columnCount - 1);
+            uint32_t dirty = 0;
+            for (uint32_t r = r0; r <= r1; r++)
+                for (uint32_t c = c0; c <= c1; c++)
+                    dirty += _blocks[r * _columnCount + c] != 0;
+            const uint32_t area = (r1 - r0 + 1) * (c1 - c0 + 1);
+            if (dirty == area || static_cast<float>(dirty) < minFill * static_cast<float>(area))
+                return;
+            for (uint32_t r = r0; r <= r1; r++)
+                for (uint32_t c = c0; c <= c1; c++)
+                    _blocks[r * _columnCount + c] = 1;
+        }
+
         template<typename F>
         void traverseDirtyCells(F&& func)
         {

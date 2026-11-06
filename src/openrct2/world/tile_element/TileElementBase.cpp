@@ -127,6 +127,7 @@ namespace OpenRCT2
     void TileElementBase::setClearanceZ(int32_t newZ)
     {
         clearanceHeight = (newZ / kCoordsZStep);
+        MapRaiseHighestElementZ(newZ);
     }
 
     uint8_t TileElementBase::getOwner() const

@@ -25,10 +25,14 @@ endif ()
 # linking the library and executable statically. There is no openrct2-cli in macOS package, so no code gets duplicated.
 # https://github.com/OpenRCT2/OpenRCT2/issues/24936
 set(LIBOPENRCT2_LINKAGE)
-if (APPLE)
+if (APPLE OR DISABLE_PIC)
     set(LIBOPENRCT2_LINKAGE STATIC)
 endif()
 add_library(libopenrct2 ${LIBOPENRCT2_LINKAGE} ${OPENRCT2_QUICKJS_NG_SOURCES} ${OPENRCT2_CORE_SOURCES} ${OPENRCT2_CORE_MM_SOURCES})
+if (LIBOPENRCT2_LINKAGE STREQUAL "STATIC")
+    # Linked into the executables: let link time optimisation inline across the library too
+    ipo_set_target_properties(libopenrct2)
+endif()
 add_library(OpenRCT2::libopenrct2 ALIAS libopenrct2)
 
 if (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "13")

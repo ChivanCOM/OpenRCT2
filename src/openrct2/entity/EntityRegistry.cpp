@@ -556,6 +556,10 @@ void EntityBase::moveTo(const CoordsXYZ& newLocation)
     {
         loc.x = kLocationNull;
     }
+    else
+    {
+        MapRaiseHighestEntityZ(loc.z);
+    }
 
     if (loc.x == kLocationNull)
     {

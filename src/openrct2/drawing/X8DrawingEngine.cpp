@@ -7,6 +7,8 @@
  * OpenRCT2 is licensed under the GNU General Public License version 3.
  *****************************************************************************/
 
+#include <cstdio>
+#include <cstdlib>
 #include "X8DrawingEngine.h"
 
 #include "../config/Config.h"
@@ -340,14 +342,31 @@ void X8DrawingEngine::OnDrawDirtyBlock(int32_t, int32_t, int32_t, int32_t)
 
 void X8DrawingEngine::ConfigureDirtyGrid()
 {
-    const auto blockWidth = 1u << 7;
-    const auto blockHeight = 1u << 7;
+    auto blockWidth = 1u << 7;
+    auto blockHeight = 1u << 7;
+    // $G3_DIRTY_BLOCK=WxH: invalidation block size experiment
+    if (const char* v = std::getenv("G3_DIRTY_BLOCK"); v != nullptr)
+    {
+        unsigned w = 0, h = 0;
+        if (std::sscanf(v, "%ux%u", &w, &h) == 2 && w >= 8 && h >= 8)
+        {
+            blockWidth = w;
+            blockHeight = h;
+        }
+    }
 
     _invalidationGrid.reset(_width, _height, blockWidth, blockHeight);
 }
 
 void X8DrawingEngine::DrawAllDirtyBlocks()
 {
+    // $G3_DIRTY_FILL: coalesce dirty blocks into one region when at least this fraction is dirty
+    static const float dirtyFill = [] {
+        const char* v = std::getenv("G3_DIRTY_FILL");
+        return v != nullptr ? static_cast<float>(std::atof(v)) : 0.0f;
+    }();
+    if (dirtyFill > 0.0f)
+        _invalidationGrid.coalesce(dirtyFill);
     _invalidationGrid.traverseDirtyCells([this](int32_t left, int32_t top, int32_t right, int32_t bottom) {
         // Draw region
         DrawDirtyBlocks(left, top, right, bottom);

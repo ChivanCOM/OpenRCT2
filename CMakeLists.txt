@@ -101,6 +101,7 @@ CMAKE_DEPENDENT_OPTION(MACOS_BUNDLE "Build macOS application bundle (OpenRCT2.ap
 
 # Options
 option(STATIC "Create a static build.")
+option(DISABLE_PIC "Build without position independent code and link libopenrct2 statically (faster on 32-bit targets such as PowerPC, where PIC costs a register and extra instructions per call)." OFF)
 option(USE_MMAP "Use mmap to try loading rct2's data segment into memory.")
 
 option(DISABLE_DISCORD_RPC "Disable Discord-RPC support." OFF)
@@ -369,7 +370,7 @@ else ()
         set(CMAKE_POSITION_INDEPENDENT_CODE ON)
     endif ()
 
-    if (HAIKU OR (APPLE AND NOT USE_MMAP))
+    if (HAIKU OR (APPLE AND NOT USE_MMAP) OR DISABLE_PIC)
         set(CMAKE_POSITION_INDEPENDENT_CODE OFF)
     else ()
         set(CMAKE_POSITION_INDEPENDENT_CODE ON)

@@ -30,8 +30,23 @@ namespace OpenRCT2::Guard
     AssertBehaviour GetAssertBehaviour();
     void SetAssertBehaviour(AssertBehaviour behaviour);
 
-    void Assert(bool expression, const std::source_location& location = std::source_location::current());
-    void Assert(bool expression, const char* message, ...);
+    // The checks are inline: a passing assertion costs a compare, not a call. Only a failing one
+    // calls the out-of-line reporting (a variadic call is expensive on some ABIs, e.g. 32-bit PowerPC).
+    void AssertFailed(const std::source_location& location);
+    void AssertFailed(const char* message, ...);
+
+    inline void Assert(bool expression, const std::source_location& location = std::source_location::current())
+    {
+        if (!expression) [[unlikely]]
+            AssertFailed(location);
+    }
+
+    template<typename... TArgs>
+    inline void Assert(bool expression, const char* message, TArgs... args)
+    {
+        if (!expression) [[unlikely]]
+            AssertFailed(message, args...);
+    }
     void Assert_VA(bool expression, const char* message, va_list args);
     void Fail(const char* message = nullptr, ...);
     void Fail_VA(const char* message, va_list args);

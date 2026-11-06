@@ -87,6 +87,67 @@
 #include <memory>
 #include <string>
 
+#include "profiling/Profiling.h"
+
+#include <algorithm>
+#include <chrono>
+#include <cstdio>
+#include <cstdlib>
+
+namespace
+{
+    // $G3_PERF: every 5 s, write frames per second and the time per frame spent in game logic
+    // (ticks), painting and the display copy to stderr (the iMac G3 has no profiler).
+    struct G3Perf
+    {
+        using Clock = std::chrono::steady_clock;
+        bool enabled = std::getenv("G3_PERF") != nullptr;
+        // $G3_PROFILE: also the 15 most expensive profiled functions per report
+        bool profile = [] {
+            if (std::getenv("G3_PROFILE") == nullptr)
+                return false;
+            OpenRCT2::Profiling::enable();
+            return true;
+        }();
+        double tickMs = 0, paintMs = 0, presentMs = 0;
+        int frames = 0, ticks = 0;
+        Clock::time_point last = Clock::now();
+
+        static double Ms(Clock::time_point a, Clock::time_point b)
+        {
+            return std::chrono::duration<double, std::milli>(b - a).count();
+        }
+        void Report()
+        {
+            auto now = Clock::now();
+            double span = Ms(last, now);
+            if (span < 5000)
+                return;
+            int f = frames > 0 ? frames : 1;
+            std::fprintf(
+                stderr, "g3perf: %.1f fps, %.1f ticks/s | per frame: logic %.1f ms, paint %.1f ms, display %.1f ms\n",
+                frames * 1000.0 / span, ticks * 1000.0 / span, tickMs / f, paintMs / f, presentMs / f);
+            if (profile)
+            {
+                auto funcs = OpenRCT2::Profiling::getData();
+                std::sort(funcs.begin(), funcs.end(), [](auto* a, auto* b) { return a->getTotalTime() > b->getTotalTime(); });
+                for (size_t i = 0; i < std::min<size_t>(15, funcs.size()); i++)
+                {
+                    std::fprintf(
+                        stderr, "g3prof: %8.1f ms %7llu calls %8.3f ms avg  %s\n", funcs[i]->getTotalTime() / 1000.0,
+                        static_cast<unsigned long long>(funcs[i]->getCallCount()), funcs[i]->getAverageTime() / 1000.0,
+                        funcs[i]->getName());
+                }
+                OpenRCT2::Profiling::resetData();
+            }
+            tickMs = paintMs = presentMs = 0;
+            frames = ticks = 0;
+            last = now;
+        }
+    };
+    G3Perf gG3Perf;
+} // namespace
+
 using namespace OpenRCT2;
 using namespace OpenRCT2::Ui;
 
@@ -1291,13 +1352,23 @@ namespace OpenRCT2
             }
 
             Network::Flush();
+
+            if (gG3Perf.enabled)
+                gG3Perf.Report();
         }
 
         void UpdateTimeAccumulators(float deltaTime)
         {
             // Ticks
             float scaledDeltaTime = deltaTime * _timeScale;
-            _ticksAccumulator = std::min(_ticksAccumulator + scaledDeltaTime, kGameUpdateMaxThreshold);
+            // $G3_MAX_TICKS: catch up at most this many game ticks per frame (default kGameMaxUpdates).
+            // On a slow machine the game then runs slower instead of drawing hardly any frames.
+            static const float g3MaxThreshold = [] {
+                const char* v = std::getenv("G3_MAX_TICKS");
+                int n = v != nullptr ? std::atoi(v) : 0;
+                return n > 0 ? kGameUpdateTimeMS * n : kGameUpdateMaxThreshold;
+            }();
+            _ticksAccumulator = std::min(_ticksAccumulator + scaledDeltaTime, g3MaxThreshold);
 
             // Real Time.
             _realtimeAccumulator = std::min(_realtimeAccumulator + deltaTime, kGameUpdateMaxThreshold);
@@ -1381,14 +1452,36 @@ namespace OpenRCT2
         {
             PROFILED_FUNCTION();
 
+            auto t0 = G3Perf::Clock::now();
             _drawingEngine->BeginDraw();
             _painter->Paint(*_drawingEngine);
+            auto t1 = G3Perf::Clock::now();
             _drawingEngine->EndDraw();
+            if (gG3Perf.enabled)
+            {
+                auto t2 = G3Perf::Clock::now();
+                gG3Perf.paintMs += G3Perf::Ms(t0, t1);
+                gG3Perf.presentMs += G3Perf::Ms(t1, t2);
+                gG3Perf.frames++;
+            }
         }
 
         void Tick()
         {
             PROFILED_FUNCTION();
+
+            struct TickTimer
+            {
+                G3Perf::Clock::time_point start = G3Perf::Clock::now();
+                ~TickTimer()
+                {
+                    if (gG3Perf.enabled)
+                    {
+                        gG3Perf.tickMs += G3Perf::Ms(start, G3Perf::Clock::now());
+                        gG3Perf.ticks++;
+                    }
+                }
+            } tickTimer;
 
             // TODO: This variable has been never "variable" in time, some code expects
             // this to be 40Hz (25 ms). Refactor this once the UI is decoupled.

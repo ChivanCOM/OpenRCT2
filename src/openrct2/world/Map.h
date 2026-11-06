@@ -57,6 +57,13 @@ namespace OpenRCT2
     void ReorganiseTileElements();
     const std::vector<TileElement>& GetTileElements();
     void SetTileElements(GameState_t& gameState, std::vector<TileElement>&& tileElements);
+
+    // Highest point that can be drawn on the map, in z coordinates: tile elements and moving
+    // entities. Lets painting skip tile rows that cannot reach into view (see PaintSessionGenerate).
+    int32_t MapGetHighestDrawnZ();
+    void MapRaiseHighestElementZ(int32_t z);
+    void MapRaiseHighestEntityZ(int32_t z);
+    void MapUpdateHighestZ();
     void StashMap();
     void UnstashMap();
     std::vector<TileElement> GetReorganisedTileElementsWithoutGhosts();

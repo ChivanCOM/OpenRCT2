@@ -7,6 +7,8 @@
  * OpenRCT2 is licensed under the GNU General Public License version 3.
  *****************************************************************************/
 
+#include <algorithm>
+#include <cstdlib>
 #include "GuestPathfinding.h"
 
 #include "../Diagnostic.h"
@@ -61,6 +63,78 @@ namespace OpenRCT2::PathFinding
     };
 
     static int32_t GuestSurfacePathFinding(Peep& peep);
+
+    /* Dominance pruning for the heuristic search below. The search is depth first without a
+     * visited set, so without pruning every alternative route to a tile is searched again and
+     * the work grows roughly exponentially with the number of junctions until maxTilesChecked
+     * stops it. A search state at a tile is (tile, arrival edge, steps taken, junctions left);
+     * a state that took no fewer steps and has no more junctions left than an earlier visit
+     * of the same tile from the same edge cannot lead to a better result, so it is not
+     * searched again (the one exception: the earlier visit's junction history can block a
+     * route as a loop that the later visit could have taken; such routes pass a junction
+     * twice and do not lead anywhere new). Within the tile limit the chosen direction is the
+     * same as without pruning; where the limit was reached the search now gets further. */
+    namespace SearchVisits
+    {
+        struct Entry
+        {
+            uint32_t key;
+            uint32_t generation;
+            uint8_t steps;
+            int8_t junctionsLeft;
+        };
+        static constexpr uint32_t kSizeBits = 12;
+        static constexpr uint32_t kProbes = 8;
+        static Entry gTable[1u << kSizeBits];
+        static uint32_t gGeneration = 0;
+        static const bool gEnabled = std::getenv("G3_PATH_NOPRUNE") == nullptr;
+
+        // Start a new search: all earlier visits are forgotten
+        static void Reset()
+        {
+            if (++gGeneration == 0)
+            {
+                std::fill(std::begin(gTable), std::end(gTable), Entry{});
+                gGeneration = 1;
+            }
+        }
+
+        // True when an earlier visit dominates this one; otherwise remembers this visit
+        static bool Dominated(const TileCoordsXYZ& loc, Direction edge, uint8_t steps, int8_t junctionsLeft)
+        {
+            if (!gEnabled)
+                return false;
+            const uint32_t key = (static_cast<uint32_t>(loc.x) & 0x3FF) | ((static_cast<uint32_t>(loc.y) & 0x3FF) << 10)
+                | ((static_cast<uint32_t>(loc.z) & 0xFF) << 20) | ((static_cast<uint32_t>(edge) & 3) << 28);
+            const uint32_t hash = (key * 2654435761u) >> (32 - kSizeBits);
+            Entry* freeSlot = nullptr;
+            for (uint32_t i = 0; i < kProbes; i++)
+            {
+                Entry& e = gTable[(hash + i) & ((1u << kSizeBits) - 1)];
+                if (e.generation != gGeneration)
+                {
+                    if (freeSlot == nullptr)
+                        freeSlot = &e;
+                    continue;
+                }
+                if (e.key != key)
+                    continue;
+                if (e.steps <= steps && e.junctionsLeft >= junctionsLeft)
+                    return true;
+                // Not dominated. Keep whichever visit is at least as good in both respects
+                // (never mix the two: that would describe a visit that did not happen).
+                if (steps <= e.steps && junctionsLeft >= e.junctionsLeft)
+                {
+                    e.steps = steps;
+                    e.junctionsLeft = junctionsLeft;
+                }
+                return false;
+            }
+            if (freeSlot != nullptr)
+                *freeSlot = { key, gGeneration, steps, junctionsLeft };
+            return false;
+        }
+    } // namespace SearchVisits
 
     enum class PathSearchResult
     {
@@ -730,6 +804,8 @@ namespace OpenRCT2::PathFinding
         loc += TileDirectionDelta[testEdge];
 
         ++numSteps;
+        if (SearchVisits::Dominated(loc, testEdge, numSteps, state.junctionCount))
+            return;
         state.countTilesChecked--;
 
         /* If this is where the search started this is a search loop and the
@@ -1237,6 +1313,13 @@ namespace OpenRCT2::PathFinding
         /* The max number of tiles to check - a whole-search limit.
          * Mainly to limit the performance impact of the path finding. */
         int32_t maxTilesChecked = (peep.is<Staff>()) ? 50000 : 15000;
+        // $G3_PATH_TILES: lower search limit for slow machines (iMac G3); staff keep their ratio
+        static const int32_t g3PathTiles = [] {
+            const char* v = std::getenv("G3_PATH_TILES");
+            return v != nullptr ? std::atoi(v) : 0;
+        }();
+        if (g3PathTiles > 0)
+            maxTilesChecked = peep.is<Staff>() ? g3PathTiles * 10 / 3 : g3PathTiles;
 
         LogPathfinding(&peep, "Choose direction for goal %d,%d,%d from %d,%d,%d", goal.x, goal.y, goal.z, loc.x, loc.y, loc.z);
 
@@ -1403,6 +1486,7 @@ namespace OpenRCT2::PathFinding
                  * covers all of the remaining edges. */
                 state.countTilesChecked = maxTilesChecked / numEdges;
                 state.junctionCount = state.maxJunctions;
+                SearchVisits::Reset();
 
                 // Initialise _peepPathFindHistory.
 

@@ -67,24 +67,21 @@ namespace OpenRCT2::Guard
         _assertBehaviour = behaviour;
     }
 
-    void Assert(bool expression, const std::source_location& location)
+    void AssertFailed(const std::source_location& location)
     {
-        if (expression)
-            return;
-
         std::stringstream messageStream;
         messageStream << "Assertion failed in " << location.file_name() << ":" << location.line();
 
         std::string message = messageStream.str();
 
-        Assert(expression, message.c_str());
+        AssertFailed("%s", message.c_str());
     }
 
-    void Assert(bool expression, const char* message, ...)
+    void AssertFailed(const char* message, ...)
     {
         va_list args;
         va_start(args, message);
-        Assert_VA(expression, message, args);
+        Assert_VA(false, message, args);
         va_end(args);
     }
 

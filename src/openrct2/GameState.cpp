@@ -254,6 +254,14 @@ namespace OpenRCT2
 
         gInUpdateCode = true;
 
+        // Once a second: rescan the highest drawn point (see MapGetHighestDrawnZ)
+        static uint32_t highestZTicks = 0;
+        if (++highestZTicks >= 40)
+        {
+            highestZTicks = 0;
+            MapUpdateHighestZ();
+        }
+
         gScreenAge++;
         if (gScreenAge == 0)
             gScreenAge--;
