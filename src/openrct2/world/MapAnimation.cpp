@@ -649,7 +649,9 @@ static void InvalidateAll(const ViewportList& viewports)
         // Code adapted from PaintSessionGenerateRotate.
         // Ideally this would iterate over tiles in memory order.
         constexpr int32_t maxTileHeightModifier = 88; // from magic value in PaintSessionGenerateRotate
-        constexpr int32_t maxTileHeight = (kMaxTileElementHeight * kCoordsZStep) + maxTileHeightModifier;
+        // As in PaintSessionGenerateRotate: only as high as the highest point actually on the map
+        const int32_t maxTileHeight = std::min(
+            (kMaxTileElementHeight * kCoordsZStep) + maxTileHeightModifier, MapGetHighestDrawnZ() + maxTileHeightModifier);
 
         const auto direction = DirectionFlipXAxis(viewport->rotation);
         const int32_t numVerticalTiles = (viewport->ViewHeight() + maxTileHeight) / kScreenCoordsTileHeight;
