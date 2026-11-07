@@ -415,7 +415,11 @@ namespace OpenRCT2
     // reads all of them from memory, which on a large park costs more than the update itself.
     void EntityRegistry::updateEntitiesSpatialIndex()
     {
-        for (auto entityId : _entitySpatialDirty)
+        // Take the list: updating can rebuild the whole index (resetEntitySpatialIndices), which
+        // clears it.
+        std::vector<EntityId> dirty;
+        dirty.swap(_entitySpatialDirty);
+        for (auto entityId : dirty)
         {
             auto* entity = tryGetEntity(entityId);
             if (entity != nullptr && entity->type != EntityType::null)
@@ -423,7 +427,10 @@ namespace OpenRCT2
                 updateEntitySpatialIndex(*entity);
             }
         }
-        _entitySpatialDirty.clear();
+        // Keep the allocation for the next tick
+        dirty.clear();
+        if (_entitySpatialDirty.empty())
+            _entitySpatialDirty.swap(dirty);
     }
 
     /**
